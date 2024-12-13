@@ -1,30 +1,113 @@
 import axios from "axios";
+import { DATA_EXTRACTION_PROMPT, GERMAN_LANGUAGE_CODE, GERMAN_LANGUAGE_NAME, MISSING_DETAILS_PROMPT, MORE_DETAILS_PROMPT, THANK_YOU_MESSAGE, WELCOME_MESSAGE_DE } from "../constants/constants";
 const url = "https://api.openai.com/v1/chat/completions";
 const token = import.meta.env.VITE_GPT_API_KEY;
-const apiKey = import.meta.env.VITE_REACT_APP_GOOGLE_API_KEY;
 const ttsKey = import.meta.env.VITE_TTS_API_KEY;
 
-interface ApiResponse {
-    choices: {
-        message: {
-            content: string;
-        };
-    }[];
+//original
+
+//Handle TTS with navigation
+interface SynthesizeTextProps {
+    navigate: (path: string) => void;
+    formData: Record<string, any>;  // Adjust type as needed
+    setFormData: React.Dispatch<React.SetStateAction<any>>;
 }
 
-export const parseJson = (transcribedText: string, setParsedJson: any, parsedJson: any) => {
-    // The data you want to send in the request
-    console.log("Transcribed Text:", transcribedText);
+export const getSynthesizeText = async (speechProps: SynthesizeTextProps) => {
+    const { navigate, formData, setFormData } = speechProps;
+    const endpoint = `https://texttospeech.googleapis.com/v1beta1/text:synthesize?key=${ttsKey}`;
+    const payload = {
+        audioConfig: {
+            audioEncoding: "MP3",
+            effectsProfileId: ["small-bluetooth-speaker-class-device"],
+            pitch: 0,
+            speakingRate: 0,
+        },
+        // input: { WELCOME_MESSAGE_DE },
+        input: { text: WELCOME_MESSAGE_DE },
+        voice: {
+            // languageCode: "en-US",
+            // name: "en-US-Journey-F",
+            languageCode: "de-DE",
+            name: "de-DE-Standard-F",
+        },
+    };
+
+    try {
+        const response = await axios.post(endpoint, payload);
+        const audioSrc = `data:audio/mp3;base64,${response.data.audioContent}`;
+        const audio = new Audio(audioSrc);
+        audio.play();
+        audio.onended = () => {
+            navigate('/form');
+            handleStartRecord({ formData, setFormData });
+        }
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+// Handles SpeechRecognition using Web Speech API
+export const handleStartRecord = async ({ formData, setFormData }: { formData: Record<string, any>, setFormData: React.Dispatch<React.SetStateAction<any>> }): Promise<void> => {
+    interface SpeechRecognitionEvent {
+        results: SpeechRecognitionResultList;
+    }
+    try {
+        // Check browser compatibility
+        const SpeechRecognition =
+            (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+        if (!SpeechRecognition) {
+            console.error("Speech Recognition is not supported in this browser.");
+            return;
+        }
+
+        // Create an instance of SpeechRecognition
+        const recognition = new SpeechRecognition();
+
+        // Set properties
+        recognition.lang = GERMAN_LANGUAGE_CODE;  // Adjust language as needed
+        // recognition.continuous = true;
+
+        // Start recognition
+        recognition.start();
+
+        // Handle recognition results
+        recognition.onresult = (event: SpeechRecognitionEvent) => {
+            const transcribedText = event.results[0][0].transcript;
+            console.log("Transcribed Text:", transcribedText);
+
+            // Call parseJson function with the result
+            extractFromModel(transcribedText, formData, setFormData);
+        };
+
+        // Handle errors
+        recognition.onerror = (event: any) => {
+            console.error("Speech recognition error:", event.error);
+        };
+
+        // Handle speech end
+        // recognition.onend = () => {
+        //     console.log("Speech recognition ended.");
+        // };
+    } catch (error) {
+        console.error("Error starting speech recognition:", error);
+    }
+};
+
+// Extract data from the model
+export const extractFromModel = async (transcribedText: string, formData: Record<string, any>, setFormData: React.Dispatch<React.SetStateAction<any>>) => {
+    console.log(transcribedText, formData);
     const requestData = {
         model: "gpt-4o-mini",
         messages: [
             {
                 role: "system",
-                content: "you are a data extraction assistant. Persist data in JSON format by analyzing and extracting relevant information. If context exists from a previous response, merge it with the new data. Required keys: first_name:str, last_name:str, birth_date:str, city:str, country:str, insurance_type:str, insurance_number:str, email:str, reason_for_visit:str, undergoing_treatment:bool, treatment_reason:str. Include missing fields from context if they are not provided in the new input."
+                content: DATA_EXTRACTION_PROMPT
             },
             {
                 role: "user",
-                content: `Previous Response (if any): ${JSON.stringify(parsedJson)}`
+                content: `Previous data: ${JSON.stringify(formData)}`
             },
             {
                 role: "user",
@@ -34,110 +117,81 @@ export const parseJson = (transcribedText: string, setParsedJson: any, parsedJso
         ],
         temperature: 0.7
     };
-    // Make the POST request
-    fetch(url, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify(requestData)
-    })
-        .then(response => response.json() as Promise<ApiResponse>) // Parse the JSON response
-        .then(data => {
-            // console.log("Response Data:", data); // Log the response
-            // Now you can extract the relevant part of the response
-            const content = data.choices[0].message.content;
-            const jsonResponse = content.replace(/```json\n|\n```/g, '').trim();
-            const parsedJson = JSON.parse(jsonResponse);
-            setParsedJson(parsedJson);
-            console.log("Parsed JSON:", parsedJson);
-        })
-        .catch(error => {
-            console.error("Error:", error);
-        });
 
-};
-
-// Start Recording
-interface RecordingStates {
-    setTranscription: (transcription: string) => void;
-    setParsedJson: (parsedJson: any) => void;
-    setIsRecording: (isRecording: boolean) => void;
-    setMediaRecorder: (mediaRecorder: MediaRecorder) => void;
-    parsedJson: any;
-}
-
-export const handleStartRecording = async ({ handleRecordingStates }: { handleRecordingStates: RecordingStates }) => {
-    const { setTranscription, setParsedJson, setIsRecording, setMediaRecorder, parsedJson } = handleRecordingStates;
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const recorder = new MediaRecorder(stream);
-
-        recorder.ondataavailable = async (event) => {
-            const audioBlob = event.data;
-            const base64Audio = await audioBlobToBase64(audioBlob);
-
-            try {
-                const response = await axios.post(
-                    `https://speech.googleapis.com/v1/speech:recognize?key=${apiKey}`,
-                    {
-                        config: {
-                            encoding: 'WEBM_OPUS',  // Correct format for browser recordings
-                            sampleRateHertz: 48000, // Matches browser audio recording
-                            languageCode: 'en-US',
-                        },
-                        audio: {
-                            content: base64Audio,
-                        },
-                    }
-                );
-
-                if (response.data.results && response.data.results.length > 0) {
-                    const newTranscription = response.data.results[0].alternatives[0].transcript;
-                    setTranscription(newTranscription);  // Update state
-
-                    // Use the updated transcription directly
-                    parseJson(newTranscription, setParsedJson, parsedJson);
-                } else {
-                    console.log('No transcription results in the API response:', response.data);
-                    setTranscription('No transcription available');
-                }
-            } catch (error) {
-                console.error('Error with Google Speech-to-Text API:', error);
-            }
-        };
-
-        recorder.start();
-        setMediaRecorder(recorder);
-        setIsRecording(true);
-        console.log('Recording started');
+        const response = await axios.post(url, requestData, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        const content = response.data.choices[0].message.content
+        const jsonResponse = content.replace(/```json\n|\n```/g, '').trim();
+        const parsedJson = JSON.parse(jsonResponse);
+        setFormData(parsedJson);
+        console.log("Extracted Data:", parsedJson);
+        console.log("formData:", formData);
+        checkAndPromptMissingDetails(parsedJson, setFormData);
     } catch (error) {
-        console.error('Error accessing microphone:', error);
+        console.error("LLM Error:", error);
     }
 };
 
-// Convert Blob to Base64
-const audioBlobToBase64 = (blob: Blob) => {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            if (reader.result) {
-                const base64Audio = btoa(
-                    new Uint8Array(reader.result as ArrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
-                );
-                resolve(base64Audio);
-            } else {
-                reject(new Error('FileReader result is null'));
-            }
-        };
-        reader.onerror = reject;
-        reader.readAsArrayBuffer(blob);
+// Check for missing details and prompt the user
+const checkAndPromptMissingDetails = async (formData: Record<string, any>, setFormData: React.Dispatch<React.SetStateAction<any>>) => {
+    // Check for missing fields in Patient Details
+    let record; //flag to record audio when missing fields are found
+    const patientDetailsFields = [
+        "firstName", "lastName", "dateOfBirth", "gender", "city", "country", "insuranceType", "insuranceNumber", "email"
+    ];
+    let missingFields: string[] = [];
+
+    // Collect missing fields from Patient Details
+    patientDetailsFields.forEach(field => {
+        if (!formData[field]) {
+            missingFields.push(field);
+        }
     });
+
+    console.log("Missing Fields:", missingFields);
+    if (missingFields.length > 0) {
+        // If there are missing fields in the Patient Details, prompt the user for each missing field
+        const missingFieldsText = missingFields.join(', '); // Create a message with missing fields
+        const message: string = formatString(MISSING_DETAILS_PROMPT, missingFieldsText);
+
+        // Call the TTS function to ask the user for the missing details
+        handleTextToSpeech(message, formData, setFormData, record='Y');
+
+        return; // Stop here if there are missing patient details
+    }
+
+    // If Patient Details are complete, check More Information section for missing fields
+    const moreInformationFields = [
+        "visitReason", "medicalTreatments", "treatmentDescription"
+    ];
+    missingFields = [];
+
+    // Collect missing fields from More Information section
+    moreInformationFields.forEach(field => {
+        if (!formData[field]) {
+            missingFields.push(field);
+        }
+    });
+
+    if (missingFields.length > 0) {
+        // If there are missing fields in the More Information section, prompt the user for each missing field
+        const missingFieldsText = missingFields.join(', '); // Create a message with missing fields
+        // const message = `Please provide the following missing details: ${missingFieldsText}`;
+        const message: string = formatString(MORE_DETAILS_PROMPT, missingFieldsText);
+
+        // Call the TTS function to ask the user for the missing details
+        handleTextToSpeech(message, formData, setFormData, record='Y');
+    } else {
+        // If all fields are complete, you can either proceed to the next step or display a success message.
+        console.log("All fields are filled in.");
+        handleTextToSpeech(THANK_YOU_MESSAGE, formData, setFormData, record='N');
+    }
 };
 
-//Handle TTS
-export const getSynthesizeText = async (text: string, navigate: (path: string) => void) => {
+// Handle Text to Speech without navigation
+const handleTextToSpeech = async (message: string, formData: Record<string, any>, setFormData: React.Dispatch<React.SetStateAction<any>>, record: string) => {
     const endpoint = `https://texttospeech.googleapis.com/v1beta1/text:synthesize?key=${ttsKey}`;
     const payload = {
         audioConfig: {
@@ -146,10 +200,10 @@ export const getSynthesizeText = async (text: string, navigate: (path: string) =
             pitch: 0,
             speakingRate: 0,
         },
-        input: { text },
+        input: { text: message },
         voice: {
-            languageCode: "en-US",
-            name: "en-US-Journey-F",
+            languageCode: GERMAN_LANGUAGE_CODE,
+            name: GERMAN_LANGUAGE_NAME,
         },
     };
 
@@ -158,8 +212,17 @@ export const getSynthesizeText = async (text: string, navigate: (path: string) =
         const audioSrc = `data:audio/mp3;base64,${response.data.audioContent}`;
         const audio = new Audio(audioSrc);
         audio.play();
-        navigate('/form');
+        audio.onended = () => {
+            if (record === 'Y') {
+                handleStartRecord({ formData, setFormData });
+            }
+        }
     } catch (error) {
         console.error(error);
     }
 };
+
+// utils.js (or any other file you prefer)
+export function formatString(template: string, value: string): string {
+    return template.replace("%s", value);
+  }  

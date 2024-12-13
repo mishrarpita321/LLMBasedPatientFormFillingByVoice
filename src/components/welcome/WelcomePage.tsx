@@ -3,13 +3,25 @@ import { motion } from "framer-motion";
 import { FaStethoscope } from "react-icons/fa";
 import { getSynthesizeText } from "../../utility/utils";
 import { useNavigate } from "react-router-dom";
+import { useContext } from "react";
+import { FormContext } from "../../context/Context";
 
 const WelcomePage = () => {
+    const formContext = useContext(FormContext);
     const navigate = useNavigate();
-    const text = "Hello! Welcome to our clinic. I’ll be helping you fill out a quick intake form. You can answer each question out loud. Let’s get started! Please tell me your first name and last name.";
+    if (!formContext) {
+        throw new Error("parseJson must be used within a FormProvider");
+    }
+    const { formData, setFormData } = formContext;
+
+    const speechProps = {
+        navigate: navigate,
+        formData: formData,
+        setFormData: setFormData,
+    }
 
     const handleClick = () => {
-        getSynthesizeText(text, navigate);
+        getSynthesizeText(speechProps);
     };
     return (
         <Box display="flex" height="100vh" sx={{ backgroundColor: "#e8f5e9" }}>

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Box, Typography, Button, Container, TextField } from '@mui/material';
 import { FaMicrophone } from 'react-icons/fa';
 import Grid from '@mui/material/Grid2';
-import { handleStartRecording } from './utils';
+// import { handleStartRecording } from './utils';
 
 interface ParsedJson {
   first_name?: string;
@@ -28,7 +28,7 @@ export default function Transcribe() {
     if (isRecording) {
       handleStopRecording();
     } else {
-      handleStartRecording({ handleRecordingStates });
+      // handleStartRecording({ handleRecordingStates });
     }
   };
 
