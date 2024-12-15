@@ -2,9 +2,10 @@ import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid2';
 import { Typography, TextField, Radio, RadioGroup, FormControlLabel, FormLabel, Select, MenuItem, Button, Container, Checkbox } from '@mui/material';
 import { FaStethoscope, FaMicrophone } from "react-icons/fa";
-import { handleStartRecord } from '../../utility/utils';
-import { useContext } from 'react';
+import { extractFromModel, handleStartRecord, checkAndPromptMissingDetails } from '../../utility/utils';
+import { useContext, useEffect } from 'react';
 import { FormContext } from '../../context/Context';
+import MicrophoneButton from '../animation/Button/MicrophoneButton';
 
 export default function Form() {
     const formContext = useContext(FormContext);
@@ -12,14 +13,26 @@ export default function Form() {
         throw new Error("parseJson must be used within a FormProvider");
     }
     const { formData, setFormData } = formContext;
-    const speechProps = {
-        formData: formData,
-        setFormData: setFormData,
-    }
 
     const handleClick = () => {
-        handleStartRecord(speechProps);
+        flowControlFn();
     };
+
+    // useEffect(() => {
+    //     handleStartRecord();
+    // flowControlFn();
+    // }, []);
+
+    const flowControlFn = async () => {
+        const transcribedText = await handleStartRecord();
+        console.log("Transcribed Text from flow control:", transcribedText);
+        if (transcribedText) {
+            const parsedJson = await extractFromModel(transcribedText, formData);
+            setFormData(parsedJson);
+            console.log("Parsed JSON:", parsedJson);
+            checkAndPromptMissingDetails(parsedJson, setFormData)
+        }
+    }
 
     return (
         <Box sx={{ position: "relative" }}>
@@ -176,7 +189,7 @@ export default function Form() {
                             marginTop: "30px",
                         }}
                     >
-                        <Button
+                        {/* <Button
                             variant="contained"
                             onClick={handleClick}
                             sx={{
@@ -187,7 +200,8 @@ export default function Form() {
                             }}
                         >
                             <FaMicrophone size={30} color="#fff" />
-                        </Button>
+                        </Button> */}
+                        <MicrophoneButton />
                     </Box>
                 </Box>
             </Container>

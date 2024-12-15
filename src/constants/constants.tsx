@@ -23,3 +23,5 @@ export const GERMAN_LANGUAGE_CODE = "de-DE";
 export const GERMAN_LANGUAGE_NAME = "de-DE-Standard-F";
 
 export const ENGLISH_LANGUAGE_NAME = "en-US-Journey-F";
+
+export const TEST_AUDIO = "HELLO";
