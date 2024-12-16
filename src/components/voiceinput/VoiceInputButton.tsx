@@ -1,26 +1,24 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { speakWelcomeMessage } from '../../utility/utils';
 import { Box } from '@mui/material';
 import { WELCOME_MESSAGE_EN } from '../../constants/constants';
 import { useNavigate } from 'react-router-dom';
+import { FormContext } from '../../context/Context';
 
-interface VoiceInputButtonProps {
-  isPlaying: boolean;
-  onPlayingChange: (isPlaying: boolean) => void;
-}
-
-const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
-  isPlaying,
-  onPlayingChange,
-}) => {
+const VoiceInputButton: React.FC = () => {
+  const formContext = useContext(FormContext);
+  if (!formContext) {
+    throw new Error("parseJson must be used within a FormProvider");
+  }
+  const { isPlaying, setIsPlaying } = formContext;
 
   const navigate = useNavigate();
   const handleStart = () => {
     speakWelcomeMessage(
       WELCOME_MESSAGE_EN,
-      () => onPlayingChange(true),
+      () => setIsPlaying(true),
       () => {
-        onPlayingChange(false),
+        setIsPlaying(false),
         navigate('/form')
       }
     );

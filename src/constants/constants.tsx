@@ -25,3 +25,5 @@ export const GERMAN_LANGUAGE_NAME = "de-DE-Standard-F";
 export const ENGLISH_LANGUAGE_NAME = "en-US-Journey-F";
 
 export const TEST_AUDIO = "HELLO";
+
+export const FORM_SUBMISSION_MESSAGE = "Thank you for providing your information. Please wait in the waiting room. Our staff will call you shortly for your checkup.";

@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { FormContext } from "../context/Context";
+import { FormContext, FormData } from "../context/Context";
 import { ReactNode } from "react";
 
 interface FormProviderProps {
     children: ReactNode;
 }
-const initialFormData = {
+
+// Initial form data with a well-defined structure
+const initialFormData: FormData = {
     city: "",
     country: "",
     dateOfBirth: "",
@@ -21,10 +23,12 @@ const initialFormData = {
 };
 
 export const FormProvider: React.FC<FormProviderProps> = ({ children }) => {
-    const [formData, setFormData] = useState<Record<string, any>>(initialFormData);  // Use initialFormData
+    // Use specific type for form data
+    const [formData, setFormData] = useState<FormData>(initialFormData);
+    const [isPlaying, setIsPlaying] = useState(false);
 
     return (
-        <FormContext.Provider value={{ formData, setFormData }}>
+        <FormContext.Provider value={{ formData, setFormData, isPlaying, setIsPlaying }}>
             {children}
         </FormContext.Provider>
     );

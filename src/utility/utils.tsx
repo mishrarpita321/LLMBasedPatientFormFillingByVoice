@@ -83,10 +83,10 @@ export const playAudio = async (
 };
 
 // Handles SpeechRecognition using Web Speech API
-export const handleStartRecord = (): Promise<string> => {
+export const handleStartRecord = (setIsRecording: (state: boolean) => void): Promise<string> => {
     return new Promise((resolve, reject) => {
+        console.log("Starting speech recognition...");
         try {
-            // Check browser compatibility
             const SpeechRecognition =
                 (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
@@ -96,34 +96,33 @@ export const handleStartRecord = (): Promise<string> => {
                 return;
             }
 
-            // Create an instance of SpeechRecognition
             const recognition = new SpeechRecognition();
-
-            // Set properties
             recognition.lang = ENGLISH_LANGUAGE_CODE;
 
             // Start recognition
+            setIsRecording(true); // Update recording state
             recognition.start();
 
-            // Handle recognition results
             recognition.onresult = (event: any) => {
                 const transcribedText = event.results[0][0].transcript;
                 console.log("Transcribed Text:", transcribedText);
+                setIsRecording(false); // Reset recording state
                 resolve(transcribedText);
             };
 
-            // Handle errors
             recognition.onerror = (event: any) => {
                 console.error("Speech recognition error:", event.error);
+                setIsRecording(false); // Reset recording state
                 reject(event.error);
             };
 
-            // Handle speech end (optional)
             recognition.onend = () => {
                 console.log("Speech recognition ended.");
+                setIsRecording(false); // Ensure state reset
             };
         } catch (error) {
             console.error("Error starting speech recognition:", error);
+            setIsRecording(false); // Reset recording state
             reject(error);
         }
     });
@@ -165,7 +164,7 @@ export const extractFromModel = async (transcribedText: string, formData: Record
 };
 
 // Check for missing details and prompt the user
-export const checkAndPromptMissingDetails = async (formData: Record<string, any>, setFormData: React.Dispatch<React.SetStateAction<any>>) => {
+export const checkAndPromptMissingDetails = async (formData: Record<string, any>, setFormData: React.Dispatch<React.SetStateAction<any>>, setIsRecording: (state: boolean) => void) => {
     const patientDetailsFields = [
         "firstName", "lastName", "dateOfBirth", "gender", "city", "country", "insuranceType", "insuranceNumber", "email"
     ];
@@ -178,7 +177,6 @@ export const checkAndPromptMissingDetails = async (formData: Record<string, any>
         }
     });
 
-    console.log("Missing Fields:", missingFields);
     if (missingFields.length > 0) {
         // If there are missing fields in the Patient Details, prompt the user for each missing field
         const missingFieldsText = missingFields.join(', '); // Create a message with missing fields
@@ -187,14 +185,12 @@ export const checkAndPromptMissingDetails = async (formData: Record<string, any>
         const audioSrc = await getSynthesizeText(message);
         if (audioSrc) {
             await playAudio(audioSrc);
-            const transcribedText = await handleStartRecord();
-            console.log("Transcribed Text from missing:", transcribedText);
+            const transcribedText = await handleStartRecord(setIsRecording);
 
             if (transcribedText) {
                 const parsedJson = await extractFromModel(transcribedText, formData);
                 setFormData(parsedJson);
-                checkAndPromptMissingDetails(parsedJson, setFormData);
-                console.log("Parsed JSON from check:", parsedJson);
+                checkAndPromptMissingDetails(parsedJson, setFormData, setIsRecording);
             }
         } else {
             console.error("Failed to get audio source");
@@ -202,8 +198,6 @@ export const checkAndPromptMissingDetails = async (formData: Record<string, any>
 
         return; // Stop here if there are missing patient details
     }
-
-    console.log("Patient Details are complete go for more data.");
 
     // If Patient Details are complete, check More Information section for missing fields
     const moreInformationFields = [
@@ -226,28 +220,23 @@ export const checkAndPromptMissingDetails = async (formData: Record<string, any>
         // Call the TTS function to ask the user for the missing details
         const audioSrc = await getSynthesizeText(message);
         if (audioSrc) {
-            const audioPlayed = await playAudio(audioSrc);
-            console.log("Audio played:", audioPlayed);
-            const transcribedText = await handleStartRecord();
-            console.log("Transcribed Text from missing:", transcribedText);
+            await playAudio(audioSrc);
+            const transcribedText = await handleStartRecord(setIsRecording);
 
             if (transcribedText) {
                 const parsedJson = await extractFromModel(transcribedText, formData);
                 setFormData(parsedJson);
-                console.log("Parsed JSON from check:", parsedJson);
-                checkAndPromptMissingDetails(parsedJson, setFormData);
+                checkAndPromptMissingDetails(parsedJson, setFormData, setIsRecording);
             }
         } else {
             console.error("Failed to get audio source");
         }
     } else {
         // If all fields are complete, you can either proceed to the next step or display a success message.
-        console.log("All fields are filled in.");
         const thankYouAudioSource = await getSynthesizeText(THANK_YOU_MESSAGE);
 
         if (thankYouAudioSource) {
-            const audioPlayed = await playAudio(thankYouAudioSource);
-            console.log("Thank you audio played:", audioPlayed);
+            await playAudio(thankYouAudioSource);
             return
         } else {
             console.error("Failed to get audio source for thank you message");
@@ -259,7 +248,6 @@ export const checkAndPromptMissingDetails = async (formData: Record<string, any>
 export function formatString(template: string, value: string): string {
     return template.replace("%s", value);
 }
-
 
 // export const speakWelcomeMessage = (onStart: () => void, onEnd: () => void) => {
 //     onStart();
@@ -274,27 +262,10 @@ export function formatString(template: string, value: string): string {
 export const speakWelcomeMessage = async (text: string, onStart: () => void, onEnd: () => void) => {
     onStart();
     try {
-        //   const response = await fetch(
-        //     'https://texttospeech.googleapis.com/v1/text:synthesize?key=YOUR_GOOGLE_API_KEY',
-        //     {
-        //       method: 'POST',
-        //       headers: {
-        //         'Content-Type': 'application/json'
-        //       },
-        //       body: JSON.stringify({
-        //         input: { text },
-        //         voice: { languageCode: 'en-US', name: 'en-US-Wavenet-D' },
-        //         audioConfig: { audioEncoding: 'MP3' }
-        //       })
-        //     }
-        //   );
         const endpoint = `https://texttospeech.googleapis.com/v1beta1/text:synthesize?key=${ttsKey}`;
         const payload = {
             audioConfig: {
                 audioEncoding: "MP3",
-                effectsProfileId: ["small-bluetooth-speaker-class-device"],
-                pitch: 0,
-                speakingRate: 0,
             },
             input: { text },
             voice: {
@@ -303,7 +274,6 @@ export const speakWelcomeMessage = async (text: string, onStart: () => void, onE
             },
         };
         const response = await axios.post(endpoint, payload);
-        // const data = await response.json();
         const audio = new Audio(`data:audio/mp3;base64,${response.data.audioContent}`);
 
         audio.onended = onEnd;
@@ -312,4 +282,36 @@ export const speakWelcomeMessage = async (text: string, onStart: () => void, onE
         console.error('Error using Google Text-to-Speech:', error);
         onEnd();
     }
+};
+
+// Function to check missing patient details
+export const checkPatientMissing = (formData: Record<string, any>): string[] => {
+    const patientDetailsFields = [
+        "firstName", "lastName", "dateOfBirth", "gender", "city", "country", "insuranceType", "insuranceNumber", "email"
+    ];
+    const missingFields: string[] = [];
+
+    patientDetailsFields.forEach(field => {
+        if (!formData[field]) {
+            missingFields.push(field);
+        }
+    });
+
+    return missingFields; // Returns the list of missing patient fields
+};
+
+// Function to check missing "More Information" details
+export const checkMoreDetailsMissing = (formData: Record<string, any>): string[] => {
+    const moreInformationFields = [
+        "visitReason", "medicalTreatments", "treatmentDescription"
+    ];
+    const missingFields: string[] = [];
+
+    moreInformationFields.forEach(field => {
+        if (!formData[field]) {
+            missingFields.push(field);
+        }
+    });
+
+    return missingFields; // Returns the list of missing more information fields
 };

@@ -1,35 +1,51 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { Button } from '@mui/material';
 import { FaMicrophone } from 'react-icons/fa';
 import styles from './MicrophoneButton.module.css';
+import { checkAndPromptMissingDetails, extractFromModel, handleStartRecord, speakWelcomeMessage } from '../../../utility/utils';
+import { FormContext } from '../../../context/Context';
+import { useNavigate } from 'react-router-dom';
+import { FORM_SUBMISSION_MESSAGE } from '../../../constants/constants';
 
 const MicrophoneButton: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
+  const navigate = useNavigate();
 
-  const handleStartRecord = async () => {
-    setIsRecording(true);
-    await new Promise((resolve) => setTimeout(resolve, 10000)); // Simulate speech detection
-    setIsRecording(false);
-    return "Sample transcribed text";
-  };
+  const formContext = useContext(FormContext);
+  if (!formContext) {
+    throw new Error("parseJson must be used within a FormProvider");
+  }
+  const { formData, setFormData, setIsPlaying } = formContext;
 
   const flowControlFn = async () => {
-    const transcribedText = await handleStartRecord();
-    console.log("Transcribed Text from flow control:", transcribedText);
+    const transcribedText = await handleStartRecord(setIsRecording);
     if (transcribedText) {
-      //   const parsedJson = await extractFromModel(transcribedText, {});
-      console.log("Parsed JSON:", "parsedJson");
+      const parsedJson = await extractFromModel(transcribedText, formData);
+      setFormData(parsedJson);
+      checkAndPromptMissingDetails(parsedJson, setFormData, setIsRecording);
     }
   };
+
+  const handleSubmitButton = () => {
+    navigate('/');
+    speakWelcomeMessage(
+      FORM_SUBMISSION_MESSAGE,
+      () => setIsPlaying(true),
+      () => setIsPlaying(false),
+    );
+  };
+  const allDetailsCollected = Object.values(formData).every((value) => value);
 
   return (
     <Button
       variant="contained"
-      onClick={flowControlFn}
+      // onClick={flowControlFn}
+      onClick={allDetailsCollected ? handleSubmitButton : flowControlFn}
+      // onClick={handleSubmitButton}
       className={`${styles.microphoneButton} ${isRecording ? styles.speaking : ''}`}
       sx={{
         backgroundColor: "#4CAF50",
-        width: isRecording ? "160px" : "80px",
+        width: isRecording || allDetailsCollected ? "160px" : "80px",
         height: "80px",
         borderRadius: "40px",
         display: "flex",
@@ -39,47 +55,19 @@ const MicrophoneButton: React.FC = () => {
         transition: "all 0.3s ease-in-out",
       }}
     >
-      <FaMicrophone
-        className={`
-        ${isRecording ? styles.iconActive : styles.iconDefault}
-      `}
-        size={30}
-        color="#fff"
-      />
-      {isRecording && (
-        <span className={styles.buttonText}>
-          Listening...
-        </span>
+      {allDetailsCollected ? (
+        <span style={{ fontSize: '20px' }}>Submit</span>
+      ) : (
+        <>
+          <FaMicrophone
+            className={isRecording ? styles.iconActive : styles.iconDefault}
+            size={30}
+            color="#fff"
+          />
+          {isRecording && <span>Listening...</span>}
+        </>
       )}
     </Button>
-
-
-    // <div className="flex justify-center pt-6">
-    //   <button
-    //     onClick={flowControlFn}
-    //     disabled={isRecording}
-    //     className={`
-    //     relative group flex items-center space-x-2 px-6 py-3 rounded-full
-    //     transition-all duration-300 transform hover:scale-105
-    //     ${isRecording
-    //         ? 'bg-red-500 animate-pulse'
-    //         : 'bg-green-500 hover:bg-green-600'
-    //       }
-    //     text-white font-semibold shadow-lg hover:shadow-xl
-    //   `}
-    //   >
-    //     <FaMicrophone className={`
-    //     w-6 h-6 transition-transform duration-300
-    //     ${isRecording ? 'scale-110' : 'group-hover:scale-110'}
-    //   `} />
-    //     <span>{isRecording ? 'Listening...' : 'Start Speaking'}</span>
-
-    //     {/* Ripple effect when recording */}
-    //     {isRecording && (
-    //       <span className="absolute inset-0 rounded-full animate-ping bg-red-400 opacity-75"></span>
-    //     )}
-    //   </button>
-    // </div>
   );
 };
 

@@ -1,9 +1,8 @@
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid2';
-import { Typography, TextField, Radio, RadioGroup, FormControlLabel, FormLabel, Select, MenuItem, Button, Container, Checkbox } from '@mui/material';
-import { FaStethoscope, FaMicrophone } from "react-icons/fa";
-import { extractFromModel, handleStartRecord, checkAndPromptMissingDetails } from '../../utility/utils';
-import { useContext, useEffect } from 'react';
+import { Typography, TextField, Radio, RadioGroup, FormControlLabel, FormLabel, Select, MenuItem, Container, Checkbox, FormControl, InputLabel } from '@mui/material';
+import { FaStethoscope } from "react-icons/fa";
+import { useContext } from 'react';
 import { FormContext } from '../../context/Context';
 import MicrophoneButton from '../animation/Button/MicrophoneButton';
 
@@ -13,26 +12,6 @@ export default function Form() {
         throw new Error("parseJson must be used within a FormProvider");
     }
     const { formData, setFormData } = formContext;
-
-    const handleClick = () => {
-        flowControlFn();
-    };
-
-    // useEffect(() => {
-    //     handleStartRecord();
-    // flowControlFn();
-    // }, []);
-
-    const flowControlFn = async () => {
-        const transcribedText = await handleStartRecord();
-        console.log("Transcribed Text from flow control:", transcribedText);
-        if (transcribedText) {
-            const parsedJson = await extractFromModel(transcribedText, formData);
-            setFormData(parsedJson);
-            console.log("Parsed JSON:", parsedJson);
-            checkAndPromptMissingDetails(parsedJson, setFormData)
-        }
-    }
 
     return (
         <Box sx={{ position: "relative" }}>
@@ -79,13 +58,19 @@ export default function Form() {
                     </Box>
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 6, md: 4 }}>
-                            <TextField label="First Name" fullWidth variant="outlined" value={formData?.firstName || ''} />
+                            <TextField label="First Name" fullWidth variant="outlined" value={formData?.firstName || ''}
+                                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                            />
                         </Grid>
                         <Grid size={{ xs: 6, md: 4 }}>
-                            <TextField label="Last Name" fullWidth variant="outlined" value={formData?.lastName || ''} />
+                            <TextField label="Last Name" fullWidth variant="outlined" value={formData?.lastName || ''}
+                                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                            />
                         </Grid>
                         <Grid size={{ xs: 6, md: 4 }}>
-                            <TextField label="Date of Birth" type="date" fullWidth InputLabelProps={{ shrink: true }} value={formData.dateOfBirth} />
+                            <TextField label="Date of Birth" type="date" fullWidth InputLabelProps={{ shrink: true }} value={formData.dateOfBirth}
+                                onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                            />
                         </Grid>
                         <Grid size={{ xs: 6, md: 4 }}>
                             <FormLabel id="gender-label">Sex</FormLabel>
@@ -97,10 +82,14 @@ export default function Form() {
                             </RadioGroup>
                         </Grid>
                         <Grid size={{ xs: 6, md: 4 }}>
-                            <TextField label="City" fullWidth variant="outlined" value={formData?.city || ''} />
+                            <TextField label="City" fullWidth variant="outlined" value={formData?.city || ''}
+                                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                            />
                         </Grid>
                         <Grid size={{ xs: 6, md: 4 }}>
-                            <TextField label="Country" fullWidth variant="outlined" value={formData?.country || ''} />
+                            <TextField label="Country" fullWidth variant="outlined" value={formData?.country || ''}
+                                onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                            />
                         </Grid>
                         <Grid size={{ xs: 6, md: 4 }}>
                             <FormLabel>Type of Insurance</FormLabel>
@@ -126,10 +115,12 @@ export default function Form() {
                             </Grid>
                         </Grid>
                         <Grid size={{ xs: 6, md: 4 }}>
-                            <TextField label="Insurance Number" fullWidth variant="outlined" value={formData?.insuranceNumber || ''} />
+                            <TextField label="Insurance Number" fullWidth variant="outlined" value={formData?.insuranceNumber || ''}
+                                onChange={(e) => setFormData({ ...formData, insuranceNumber: e.target.value })} />
                         </Grid>
                         <Grid size={{ xs: 6, md: 4 }}>
-                            <TextField label="Email" type="email" fullWidth variant="outlined" value={formData?.email || ''} />
+                            <TextField label="Email" type="email" fullWidth variant="outlined" value={formData?.email || ''}
+                                onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
                         </Grid>
                     </Grid>
 
@@ -151,23 +142,27 @@ export default function Form() {
                                 fullWidth
                                 variant="outlined"
                                 value={formData?.visitReason || ''}
+                                onChange={(e) =>
+                                    setFormData({ ...formData, visitReason: e.target.value })
+                                }
                             />
                         </Grid>
                         <Grid size={{ xs: 6, md: 6 }}>
-                            <Select
-                                fullWidth
-                                displayEmpty
-                                defaultValue=""
-                                onChange={(e) => setFormData({ ...formData, medicalTreatments: e.target.value })}
-                                value={formData?.medicalTreatments || ''}
-                            >
-                                <MenuItem value="" disabled>
-                                    Are you undergoing any other medical treatments?
-                                </MenuItem>
-                                <MenuItem value="Yes">Yes</MenuItem>
-                                <MenuItem value="No">No</MenuItem>
-                            </Select>
+                            <FormControl fullWidth sx={{ m: 1 }}>
+                                <InputLabel id="medical-treatments-label">Are you undergoing any other medical treatments?</InputLabel>
+                                <Select
+                                    labelId="medical-treatments-labe"
+                                    id="demo-simple-select-helper"
+                                    value={formData?.medicalTreatments || ''}
+                                    label="Are you undergoing any other medical treatments"
+                                    onChange={(e) => setFormData({ ...formData, medicalTreatments: e.target.value })}
+                                >
+                                    <MenuItem value="Yes">Yes</MenuItem>
+                                    <MenuItem value="No">No</MenuItem>
+                                </Select>
+                            </FormControl>
                         </Grid>
+                        {/* Conditionally render TextField if value is "Yes" */}
                         <Grid size={{ xs: 6, md: 6 }}>
                             <TextField
                                 label="If yes, describe the reasons here"
@@ -176,10 +171,12 @@ export default function Form() {
                                 fullWidth
                                 variant="outlined"
                                 value={formData?.treatmentDescription || ''}
+                                onChange={(e) =>
+                                    setFormData({ ...formData, treatmentDescription: e.target.value })
+                                }
                             />
                         </Grid>
                     </Grid>
-
                     {/* Voice Input */}
                     <Box
                         sx={{
@@ -189,18 +186,6 @@ export default function Form() {
                             marginTop: "30px",
                         }}
                     >
-                        {/* <Button
-                            variant="contained"
-                            onClick={handleClick}
-                            sx={{
-                                backgroundColor: "#4CAF50",
-                                width: "80px",
-                                height: "80px",
-                                borderRadius: "50%",
-                            }}
-                        >
-                            <FaMicrophone size={30} color="#fff" />
-                        </Button> */}
                         <MicrophoneButton />
                     </Box>
                 </Box>
