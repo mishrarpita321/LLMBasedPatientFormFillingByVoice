@@ -1,5 +1,5 @@
 import axios from "axios";
-import { DATA_EXTRACTION_PROMPT, ENGLISH_LANGUAGE_CODE, GERMAN_LANGUAGE_CODE, GERMAN_LANGUAGE_NAME, MISSING_DETAILS_PROMPT, MORE_DETAILS_PROMPT, THANK_YOU_MESSAGE, WELCOME_MESSAGE_DE } from "../constants/constants";
+import { DATA_EXTRACTION_PROMPT, ENGLISH_LANGUAGE_CODE, MISSING_DETAILS_PROMPT, MORE_DETAILS_PROMPT, THANK_YOU_MESSAGE } from "../constants/constants";
 import React from "react";
 const url = "https://api.openai.com/v1/chat/completions";
 const token = import.meta.env.VITE_GPT_API_KEY;
