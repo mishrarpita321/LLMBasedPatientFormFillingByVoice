@@ -39,7 +39,9 @@ jobs:
     # Save Current Version
     - name: Save Version
       id: version
-      run: echo "tag=$(node -p -e \"require('./package.json').version\")" >> $GITHUB_ENV
+      run: |
+       VERSION=$(node -p "require('./package.json').version")
+       echo "tag=$VERSION" >> $GITHUB_ENV
 
     # Increment Version
     - name: Increment Version
