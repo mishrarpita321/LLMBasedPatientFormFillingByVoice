@@ -2,16 +2,31 @@ import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid2';
 import { Typography, TextField, Radio, RadioGroup, FormControlLabel, FormLabel, Select, MenuItem, Container, Checkbox, FormControl, InputLabel } from '@mui/material';
 import { FaStethoscope } from "react-icons/fa";
-import { useContext } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { FormContext } from '../../context/Context';
 import MicrophoneButton from '../animation/Button/MicrophoneButton';
 
 export default function Form() {
+    const formRef = useRef<HTMLDivElement>(null);
+    const [inputIds, setInputIds] = useState<string[]>([]);
     const formContext = useContext(FormContext);
     if (!formContext) {
         throw new Error("parseJson must be used within a FormProvider");
     }
     const { formData, setFormData } = formContext;
+
+    useEffect(() => {
+        if (formRef.current) {
+            const elements = formRef.current.querySelectorAll('[id]');
+            const ids: string[] = Array.from(elements)
+                .map((el) => el.id)
+                .filter((id) => !id.endsWith('-label')); // Exclude label IDs
+
+            setInputIds([...new Set(ids)]); // Remove duplicates if any
+        }
+    }, []);
+
+    console.log('inputIds:', inputIds);
 
     return (
         <Box sx={{ position: "relative" }}>
@@ -46,7 +61,7 @@ export default function Form() {
             </Box>
 
             {/* Form Section */}
-            <Container>
+            <Container id="user-form" ref={formRef}>
                 <Box sx={{ padding: "20px", backgroundColor: "#fff", borderRadius: "8px", boxShadow: 3 }}>
                     <Box sx={{ backgroundColor: "#DBEBDC" }}>
                         <Typography
@@ -58,23 +73,41 @@ export default function Form() {
                     </Box>
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 6, md: 4 }}>
-                            <TextField label="First Name" fullWidth variant="outlined" value={formData?.firstName || ''}
+                            <TextField
+                                label="First Name"
+                                id='firstName'
+                                fullWidth
+                                variant="outlined"
+                                value={formData?.firstName || ''}
                                 onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                             />
                         </Grid>
                         <Grid size={{ xs: 6, md: 4 }}>
-                            <TextField label="Last Name" fullWidth variant="outlined" value={formData?.lastName || ''}
+                            <TextField label="Last Name"
+                                fullWidth
+                                id='lastName'
+                                variant="outlined"
+                                value={formData?.lastName || ''}
                                 onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                             />
                         </Grid>
                         <Grid size={{ xs: 6, md: 4 }}>
-                            <TextField label="Date of Birth" type="date" fullWidth InputLabelProps={{ shrink: true }} value={formData.dateOfBirth}
+                            <TextField label="Date of Birth"
+                                type="date" fullWidth
+                                id='dateOfBirth'
+                                InputLabelProps={{ shrink: true }}
+                                value={formData.dateOfBirth}
                                 onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
                             />
                         </Grid>
                         <Grid size={{ xs: 6, md: 4 }}>
-                            <FormLabel id="gender-label">Sex</FormLabel>
-                            <RadioGroup row aria-labelledby="gender-label" name="gender" value={formData?.gender || ''}
+                            <FormLabel id="gender">Sex</FormLabel>
+                            <RadioGroup
+                                row
+                                aria-labelledby="gender"
+                                id='gender'
+                                name="gender"
+                                value={formData?.gender || ''}
                                 onChange={(e) => setFormData({ ...formData, gender: e.target.value })}>
                                 <FormControlLabel value="female" control={<Radio />} label="female" />
                                 <FormControlLabel value="male" control={<Radio />} label="Male" />
@@ -82,12 +115,22 @@ export default function Form() {
                             </RadioGroup>
                         </Grid>
                         <Grid size={{ xs: 6, md: 4 }}>
-                            <TextField label="City" fullWidth variant="outlined" value={formData?.city || ''}
+                            <TextField
+                                label="City"
+                                id='city'
+                                fullWidth
+                                variant="outlined"
+                                value={formData?.city || ''}
                                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                             />
                         </Grid>
                         <Grid size={{ xs: 6, md: 4 }}>
-                            <TextField label="Country" fullWidth variant="outlined" value={formData?.country || ''}
+                            <TextField
+                                label="Country"
+                                id='country'
+                                fullWidth
+                                variant="outlined"
+                                value={formData?.country || ''}
                                 onChange={(e) => setFormData({ ...formData, country: e.target.value })}
                             />
                         </Grid>
@@ -98,6 +141,7 @@ export default function Form() {
                                     control={
                                         <Checkbox
                                             checked={formData.insuranceType === "public"}
+                                            id='insuranceType'
                                             onChange={(e) => setFormData({ ...formData, insuranceType: e.target.checked ? "public" : "" })}
                                         />
                                     }
@@ -115,11 +159,20 @@ export default function Form() {
                             </Grid>
                         </Grid>
                         <Grid size={{ xs: 6, md: 4 }}>
-                            <TextField label="Insurance Number" fullWidth variant="outlined" value={formData?.insuranceNumber || ''}
+                            <TextField
+                                label="Insurance Number"
+                                id='insuranceNumber'
+                                fullWidth variant="outlined"
+                                value={formData?.insuranceNumber || ''}
                                 onChange={(e) => setFormData({ ...formData, insuranceNumber: e.target.value })} />
                         </Grid>
                         <Grid size={{ xs: 6, md: 4 }}>
-                            <TextField label="Email" type="email" fullWidth variant="outlined" value={formData?.email || ''}
+                            <TextField
+                                label="Email"
+                                id='email'
+                                type="email" fullWidth
+                                variant="outlined"
+                                value={formData?.email || ''}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
                         </Grid>
                     </Grid>
@@ -137,6 +190,7 @@ export default function Form() {
                         <Grid size={{ xs: 6, md: 6 }}>
                             <TextField
                                 label="Describe the reason for your visit"
+                                id='visitReason'
                                 multiline
                                 rows={3}
                                 fullWidth
@@ -149,10 +203,10 @@ export default function Form() {
                         </Grid>
                         <Grid size={{ xs: 6, md: 6 }}>
                             <FormControl fullWidth sx={{ m: 1 }}>
-                                <InputLabel id="medical-treatments-label">Are you undergoing any other medical treatments?</InputLabel>
+                                <InputLabel>Are you undergoing any other medical treatments?</InputLabel>
                                 <Select
-                                    labelId="medical-treatments-labe"
-                                    id="demo-simple-select-helper"
+                                    labelId="medicalTreatments-label"
+                                    id="medicalTreatments"
                                     value={formData?.medicalTreatments || ''}
                                     label="Are you undergoing any other medical treatments"
                                     onChange={(e) => setFormData({ ...formData, medicalTreatments: e.target.value })}
@@ -166,6 +220,7 @@ export default function Form() {
                         <Grid size={{ xs: 6, md: 6 }}>
                             <TextField
                                 label="If yes, describe the reasons here"
+                                id='treatmentDescription'
                                 multiline
                                 rows={3}
                                 fullWidth
@@ -186,7 +241,7 @@ export default function Form() {
                             marginTop: "30px",
                         }}
                     >
-                        <MicrophoneButton />
+                        <MicrophoneButton inputIds={inputIds} />
                     </Box>
                 </Box>
             </Container>

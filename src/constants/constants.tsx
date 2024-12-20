@@ -1,6 +1,7 @@
-export const DATA_EXTRACTION_PROMPT = `You are a data extraction assistant. Extract relevant information and persist it in JSON format. Merge previous context if available. Required keys: firstName, lastName, dateOfBirth, gender, city, country, insuranceType, insuranceNumber, email, visitReason, medicalTreatments, and treatmentDescription.
+export const DATA_EXTRACTION_PROMPT = `You are a data extraction assistant. Extract relevant information and persist it in JSON format. Merge previous context if available. Required keys: %s.
 First and Last Name: Ensure they start with a capital letter.
 Email: Ensure it is lowercase and without spaces.
+Date of Birth: Ensure it is in the format YYYY-MM-DD.
 Insurance Type: Respond only as 'public' or 'private' (no other text).
 Insurance Number: Ensure no spaces and use uppercase letters only.
 MedicalTreatments: Yes or No.

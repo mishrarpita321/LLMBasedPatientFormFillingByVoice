@@ -13,7 +13,7 @@ const initialFormData: FormData = {
     dateOfBirth: "",
     email: "",
     firstName: "",
-    gender: "female",
+    gender: "",
     insuranceNumber: "",
     insuranceType: "",
     lastName: "",
