@@ -11,12 +11,6 @@ export const WELCOME_MESSAGE_DE = "Hallo! Willkommen in unserer Klinik. Ich werd
 
 export const WELCOME_MESSAGE_EN = "Hello! Welcome to our clinic. I’ll be helping you fill out a quick intake form. You can answer each question out loud. Let’s get started! Please tell me your first name and last name.";
 
-export const MISSING_DETAILS_PROMPT = "Please provide the missing details: %s";
-
-export const MORE_DETAILS_PROMPT = "Please provide more details about %s";
-
-export const THANK_YOU_MESSAGE = "Thank you for providing the information. Please confirm if the details are correct, you can edit any incorrect details and submit the form by clicking on the submit button.";   
-
 export const ENGLISH_LANGUAGE_CODE = "en-US";
 
 export const GERMAN_LANGUAGE_CODE = "de-DE";
@@ -27,4 +21,18 @@ export const ENGLISH_LANGUAGE_NAME = "en-US-Journey-F";
 
 export const TEST_AUDIO = "HELLO";
 
-export const FORM_SUBMISSION_MESSAGE = "Thank you for providing your information. Please wait in the waiting room. Our staff will call you shortly for your checkup.";
+export const MISSING_DETAILS_PROMPT_EN = "Please provide the missing details: %s"; 
+
+export const MISSING_DETAILS_PROMPT_DE = "Bitte geben Sie die fehlenden Details an: %s";
+
+export const MORE_DETAILS_PROMPT_EN = "Please provide more details about %s"; 
+
+export const MORE_DETAILS_PROMPT_DE = "Bitte geben Sie mehr Details zu %s an";
+
+export const THANK_YOU_MESSAGE_EN = "Thank you for providing the information. Please confirm if the details are correct, you can edit any incorrect details and submit the form by clicking on the submit button."; 
+
+export const THANK_YOU_MESSAGE_DE = "Vielen Dank für die Bereitstellung der Informationen. Bitte bestätigen Sie, ob die Angaben korrekt sind. Sie können falsche Angaben bearbeiten und das Formular absenden, indem Sie auf die Schaltfläche 'Absenden' klicken.";
+
+export const FORM_SUBMISSION_MESSAGE_EN = "Thank you for providing your information. Please wait in the waiting room. Our staff will call you shortly for your checkup."; 
+
+export const FORM_SUBMISSION_MESSAGE_DE = "Vielen Dank für die Bereitstellung Ihrer Informationen. Bitte warten Sie im Wartezimmer. Unser Personal wird Sie in Kürze zu Ihrem Check-up aufrufen.";

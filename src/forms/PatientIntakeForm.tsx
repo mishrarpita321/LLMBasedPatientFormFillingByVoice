@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import styles from './PatientIntakeForm.module.css';
-import { handleTranscription } from '../utility/utils';
+import { fillForm, fillFormByVoice } from 'form-field-extractor';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css'; // Don't forget to import styles
+import { WELCOME_MESSAGE_EN } from '../constants/constants';
+const token = import.meta.env.VITE_GPT_API_KEY;
+const ttsKey = import.meta.env.VITE_TTS_API_KEY;
 
 interface PatientFormData {
     firstName: string;
@@ -14,7 +19,6 @@ interface PatientFormData {
 }
 
 const PatientIntakeForm: React.FC = () => {
-    const [inputIds, setInputIds] = useState<string[]>([]);
     const [formData, setFormData] = useState<PatientFormData>({
         firstName: '',
         lastName: '',
@@ -36,46 +40,54 @@ const PatientIntakeForm: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log('Patient Data Submitted:', formData);
-        const data = await handleTranscription(inputIds, formData.testinput);
-        if (data) {
-            const parsedData = JSON.parse(data);
-
-            // Ensure all fields are strings
-            const sanitizedData: PatientFormData = {
-                firstName: parsedData.firstName || '',
-                lastName: parsedData.lastName || '',
-                dateOfBirth: parsedData.dateOfBirth || '',
-                phoneNumber: parsedData.phoneNumber || '',
-                email: parsedData.email || '',
-                address: parsedData.address || '',
-                medicalHistory: parsedData.medicalHistory || '',
-                testinput: formData.testinput, // keep original testinput
-            };
-
-            setFormData(sanitizedData);
-            console.log('Transcription Data:', sanitizedData);
-        }
+        const extractedData = await fillForm('user-form', token, formData.testinput);
+        setFormData((prevState) => ({
+            ...prevState,
+            ...extractedData,
+        }));
     };
 
+    const triggerVoice = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const extractedData = await fillFormByVoice('user-form', token, "Hello", ttsKey);
+        setFormData((prevState) => ({
+            ...prevState,
+            ...(typeof extractedData === 'object' && extractedData !== null ? extractedData : {}),
+        }));
+    };
 
-    React.useEffect(() => {
-        const form = document.getElementById('user-form') as HTMLFormElement;
-        const inputs = form?.querySelectorAll('input');
-        const ids: string[] = [];
-        inputs?.forEach(input => {
-            if (input.id) {
-                ids.push(input.id);
-            }
+    const formSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
+        const inputFields = document.querySelectorAll('input, textarea');
+        inputFields.forEach((field) => {
+            (field as HTMLInputElement | HTMLTextAreaElement).style.border = '1px solid #ccc';
         });
-
-        setInputIds(ids);
-    }, []);
-
+        
+        toast.success('Patient Data Submitted Successfully!', {
+            position: 'bottom-right',
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+        });
+        setFormData({
+            firstName: '',
+            lastName: '',
+            dateOfBirth: '',
+            phoneNumber: '',
+            email: '',
+            address: '',
+            medicalHistory: '',
+            testinput: '',
+        });
+    };
+    
     return (
         <div className={styles.formContainer}>
             <h2>Patient Intake Form</h2>
-            <form onSubmit={handleSubmit} id="user-form">
+            <form id="user-form">
                 <div className={styles.formGroup}>
                     <label htmlFor="firstName">First Name:</label>
                     <input
@@ -84,6 +96,7 @@ const PatientIntakeForm: React.FC = () => {
                         name="firstName"
                         value={formData.firstName}
                         onChange={handleChange}
+                    // required
                     />
                 </div>
 
@@ -95,6 +108,7 @@ const PatientIntakeForm: React.FC = () => {
                         name="lastName"
                         value={formData.lastName}
                         onChange={handleChange}
+                    // required
                     />
                 </div>
 
@@ -106,6 +120,7 @@ const PatientIntakeForm: React.FC = () => {
                         name="dateOfBirth"
                         value={formData.dateOfBirth}
                         onChange={handleChange}
+                    // required
                     />
                 </div>
 
@@ -117,6 +132,7 @@ const PatientIntakeForm: React.FC = () => {
                         name="phoneNumber"
                         value={formData.phoneNumber}
                         onChange={handleChange}
+                    // required
                     />
                 </div>
 
@@ -128,6 +144,7 @@ const PatientIntakeForm: React.FC = () => {
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
+                    // required
                     />
                 </div>
 
@@ -139,6 +156,7 @@ const PatientIntakeForm: React.FC = () => {
                         name="address"
                         value={formData.address}
                         onChange={handleChange}
+                    // required
                     />
                 </div>
 
@@ -150,6 +168,7 @@ const PatientIntakeForm: React.FC = () => {
                         value={formData.medicalHistory}
                         onChange={handleChange}
                         rows={4}
+                    // required
                     />
                 </div>
 
@@ -164,10 +183,13 @@ const PatientIntakeForm: React.FC = () => {
                     />
                 </div>
 
-                <div className={styles.formGroup}>
-                    <button type="submit">Submit</button>
+                <div className={styles.buttonGroup}>
+                    <button onClick={handleSubmit}>Text</button>
+                    <button onClick={triggerVoice}>Voice</button>
+                    <button onClick={(e) => formSubmit(e)}>Form Submit</button>
                 </div>
             </form>
+            <ToastContainer />
         </div>
     );
 };

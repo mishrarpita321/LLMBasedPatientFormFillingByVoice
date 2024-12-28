@@ -3,6 +3,8 @@ import Form from './components/form/Form'
 import WelcomePage from './pages/WelcomePage'
 import { FormProvider } from './provider/ContextProvider'
 import PatientIntakeForm from './forms/PatientIntakeForm'
+import "/node_modules/flag-icons/css/flag-icons.min.css";
+
 
 function App() {
   return (

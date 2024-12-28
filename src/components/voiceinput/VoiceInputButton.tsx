@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { Box } from '@mui/material';
-import { GERMAN_LANGUAGE_CODE, GERMAN_LANGUAGE_NAME, WELCOME_MESSAGE_DE, WELCOME_MESSAGE_EN } from '../../constants/constants';
+import { ENGLISH_LANGUAGE_CODE, ENGLISH_LANGUAGE_NAME, GERMAN_LANGUAGE_CODE, GERMAN_LANGUAGE_NAME, WELCOME_MESSAGE_DE, WELCOME_MESSAGE_EN } from '../../constants/constants';
 import { useNavigate } from 'react-router-dom';
 import { FormContext } from '../../context/Context';
 import axios from 'axios';
@@ -11,18 +11,22 @@ const VoiceInputButton: React.FC = () => {
   if (!formContext) {
     throw new Error("parseJson must be used within a FormProvider");
   }
-  const { isPlaying, setIsPlaying } = formContext;
+  const { isPlaying, setIsPlaying, language } = formContext;
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  console.log('language:', language);
 
   const preloadAudio = async () => {
     try {
       const endpoint = `https://texttospeech.googleapis.com/v1beta1/text:synthesize?key=${ttsKey}`;
       const payload = {
         audioConfig: { audioEncoding: "MP3" },
-        input: { text: WELCOME_MESSAGE_DE },
-        voice: { languageCode: GERMAN_LANGUAGE_CODE, name: GERMAN_LANGUAGE_NAME },
+        input: { text: language === 'en' ? WELCOME_MESSAGE_EN : WELCOME_MESSAGE_DE },
+        voice: { languageCode: language === 'en' ? ENGLISH_LANGUAGE_CODE : GERMAN_LANGUAGE_CODE, name: language === 'en' ? ENGLISH_LANGUAGE_NAME : GERMAN_LANGUAGE_NAME },
       };
+
+      console.log('payload:', payload);
       const response = await axios.post(endpoint, payload);
       setAudioSrc(`data:audio/mp3;base64,${response.data.audioContent}`);
     } catch (error) {
@@ -35,7 +39,6 @@ const VoiceInputButton: React.FC = () => {
       console.error("Audio not preloaded.");
       return;
     }
-    console.log('handleStart');
     setIsPlaying(true);
 
     const audio = new Audio(audioSrc);
@@ -48,9 +51,7 @@ const VoiceInputButton: React.FC = () => {
 
   React.useEffect(() => {
     preloadAudio();
-  }, []);
-
-  console.log('audioSrc:', audioSrc);
+  }, [language]);
 
   return (
     <Box>
@@ -64,7 +65,9 @@ const VoiceInputButton: React.FC = () => {
             : 'bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-xl'
           }`}
       >
-        {isPlaying ? 'Listening...' : 'Start Voice Input'}
+        {isPlaying
+          ? (language === 'en' ? 'Listening...' : 'Hören...')
+          : (language === 'en' ? 'Start Voice Input' : 'Stimmeingabe starten')}
       </button>
     </Box>
   );

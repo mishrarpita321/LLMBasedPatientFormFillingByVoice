@@ -2,16 +2,13 @@ import React, { useContext, useEffect, useState } from 'react';
 import { Button } from '@mui/material';
 import { FaMicrophone } from 'react-icons/fa';
 import styles from './MicrophoneButton.module.css';
-import { checkAndPromptMissingDetails, extractFromModel, getSynthesizeText, handleStartRecord, handleTranscription } from '../../../utility/utils';
+import { checkAndPromptMissingDetails, extractFromModel, getSynthesizeText, handleStartRecord } from '../../../utility/utils';
 import { FormContext } from '../../../context/Context';
 import { useNavigate } from 'react-router-dom';
-import { FORM_SUBMISSION_MESSAGE } from '../../../constants/constants';
+import { FORM_SUBMISSION_MESSAGE_DE, FORM_SUBMISSION_MESSAGE_EN } from '../../../constants/constants';
 
-interface MicrophoneButtonProps {
-  inputIds: string[];
-}
 
-const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({ inputIds }) => {
+const MicrophoneButton: React.FC= () => {
   const [isRecording, setIsRecording] = useState(false);
   const navigate = useNavigate();
 
@@ -19,21 +16,23 @@ const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({ inputIds }) => {
   if (!formContext) {
     throw new Error("parseJson must be used within a FormProvider");
   }
-  const { formData, setFormData } = formContext;
+  const { formData, setFormData, language, inputIds } = formContext;
 
   const flowControlFn = async () => {
-    const transcribedText = await handleStartRecord(setIsRecording);
+    setIsRecording(true);
+    const transcribedText = await handleStartRecord(setIsRecording, language);
     if (transcribedText) {
       const parsedJson = await extractFromModel(transcribedText, formData, inputIds);
       console.log('parsedJson:', parsedJson);
       // const parsedJson = await handleTranscription(inputIds, transcribedText);
       setFormData(parsedJson);
-      checkAndPromptMissingDetails(parsedJson, setFormData, setIsRecording, inputIds);
+      checkAndPromptMissingDetails(parsedJson, setFormData, setIsRecording, inputIds, language);
     }
   };
 
   const handleSubmitButton = async () => {
-    const audioSrc = await getSynthesizeText(FORM_SUBMISSION_MESSAGE);
+    const message = language === 'en' ? FORM_SUBMISSION_MESSAGE_EN : FORM_SUBMISSION_MESSAGE_DE;
+    const audioSrc = await getSynthesizeText(message, language);
 
     if (audioSrc) {
       const audio = new Audio(audioSrc);
@@ -49,7 +48,6 @@ const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({ inputIds }) => {
   const allDetailsCollected = Object.values(formData).every((value) => value);
 
   useEffect(() => {
-    setIsRecording(true);
     flowControlFn();
   }, []);
 

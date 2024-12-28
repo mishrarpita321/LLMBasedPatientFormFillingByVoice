@@ -2,18 +2,17 @@ import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid2';
 import { Typography, TextField, Radio, RadioGroup, FormControlLabel, FormLabel, Select, MenuItem, Container, Checkbox, FormControl, InputLabel } from '@mui/material';
 import { FaStethoscope } from "react-icons/fa";
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef } from 'react';
 import { FormContext } from '../../context/Context';
 import MicrophoneButton from '../animation/Button/MicrophoneButton';
 
 export default function Form() {
     const formRef = useRef<HTMLDivElement>(null);
-    const [inputIds, setInputIds] = useState<string[]>([]);
     const formContext = useContext(FormContext);
     if (!formContext) {
         throw new Error("parseJson must be used within a FormProvider");
     }
-    const { formData, setFormData } = formContext;
+    const { formData, setFormData, setInputIds } = formContext;
 
     useEffect(() => {
         if (formRef.current) {
@@ -25,8 +24,6 @@ export default function Form() {
             setInputIds([...new Set(ids)]); // Remove duplicates if any
         }
     }, []);
-
-    console.log('inputIds:', inputIds);
 
     return (
         <Box sx={{ position: "relative" }}>
@@ -241,7 +238,7 @@ export default function Form() {
                             marginTop: "30px",
                         }}
                     >
-                        <MicrophoneButton inputIds={inputIds} />
+                        <MicrophoneButton />
                     </Box>
                 </Box>
             </Container>

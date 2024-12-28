@@ -31,16 +31,29 @@
     border: 1px solid #ccc;
   }
   
-  button {
-    background-color: #4CAF50;
-    color: white;
-    padding: 10px 20px;
-    font-size: 16px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
+  .buttonGroup {
+    display: flex;
+    gap: 10px; /* Space between buttons */
+    margin-bottom: 15px;
+    justify-content: center;
   }
   
-  button:hover {
-    background-color: #45a049;
-  }  
+  .buttonGroup button {
+    padding: 10px 15px; /* Adjust padding */
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #007BFF; /* Primary button color */
+    color: white;
+    transition: background-color 0.3s;
+  }
+  
+  .buttonGroup button:hover {
+    background-color: #0056b3; /* Darker shade on hover */
+  }
+  
+  .buttonGroup button:active {
+    background-color: #004080; /* Even darker shade on click */
+  }
+  

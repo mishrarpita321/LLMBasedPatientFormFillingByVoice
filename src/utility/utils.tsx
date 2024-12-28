@@ -1,12 +1,12 @@
 import axios from "axios";
-import { DATA_EXTRACTION_PROMPT, ENGLISH_LANGUAGE_CODE, ENGLISH_LANGUAGE_NAME, GERMAN_LANGUAGE_CODE, GERMAN_LANGUAGE_NAME, MISSING_DETAILS_PROMPT, MORE_DETAILS_PROMPT, THANK_YOU_MESSAGE } from "../constants/constants";
+import { DATA_EXTRACTION_PROMPT, ENGLISH_LANGUAGE_CODE, ENGLISH_LANGUAGE_NAME, GERMAN_LANGUAGE_CODE, GERMAN_LANGUAGE_NAME, MISSING_DETAILS_PROMPT_DE, MISSING_DETAILS_PROMPT_EN, THANK_YOU_MESSAGE_DE, THANK_YOU_MESSAGE_EN } from "../constants/constants";
 import React from "react";
 const url = "https://api.openai.com/v1/chat/completions";
 const token = import.meta.env.VITE_GPT_API_KEY;
 const ttsKey = import.meta.env.VITE_TTS_API_KEY;
 
 //Handle Text to Speech
-export const getSynthesizeText = async (text: string) => {
+export const getSynthesizeText = async (text: string, language: string) => {
     console.log("Text to Synthesize:", text);
     // const { navigate, formData, setFormData } = speechProps;
     const endpoint = `https://texttospeech.googleapis.com/v1beta1/text:synthesize?key=${ttsKey}`;
@@ -19,8 +19,8 @@ export const getSynthesizeText = async (text: string) => {
         },
         input: { text },
         voice: {
-            languageCode: ENGLISH_LANGUAGE_CODE,
-            name: ENGLISH_LANGUAGE_NAME,
+            languageCode: language === 'en' ? ENGLISH_LANGUAGE_CODE : GERMAN_LANGUAGE_CODE,
+            name: language === 'en' ? ENGLISH_LANGUAGE_NAME : GERMAN_LANGUAGE_NAME,
         },
     };
 
@@ -83,9 +83,9 @@ export const playAudio = async (
 };
 
 // Handles SpeechRecognition using Web Speech API
-export const handleStartRecord = (setIsRecording: (state: boolean) => void): Promise<string> => {
+export const handleStartRecord = (setIsRecording: (state: boolean) => void, language: string): Promise<string> => {
+    setIsRecording(true); // Update recording state
     return new Promise((resolve, reject) => {
-        console.log("Starting speech recognition...");
         try {
             const SpeechRecognition =
                 (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -97,11 +97,10 @@ export const handleStartRecord = (setIsRecording: (state: boolean) => void): Pro
             }
 
             const recognition = new SpeechRecognition();
-            recognition.lang = ENGLISH_LANGUAGE_CODE;
+            recognition.lang = language === 'en' ? ENGLISH_LANGUAGE_CODE : GERMAN_LANGUAGE_CODE;
 
             // Start recognition
             recognition.start();
-            setIsRecording(true); // Update recording state
 
             recognition.onresult = (event: any) => {
                 const transcribedText = event.results[0][0].transcript;
@@ -130,7 +129,6 @@ export const handleStartRecord = (setIsRecording: (state: boolean) => void): Pro
 
 // Extract data from the model
 export const extractFromModel = async (transcribedText: string, formData: Record<string, any>, inputIds: string[] | null = null) => {
-    // console.log("Extracting data from model...", DATA_EXTRACTION_PROMPT);
     console.log("Extracting data from model...", formatString(DATA_EXTRACTION_PROMPT, inputIds ? inputIds.join(', ') : ''));
     const requestData = {
         model: "gpt-4o-mini",
@@ -179,7 +177,8 @@ export const checkAndPromptMissingDetails = async (
     formData: Record<string, any>,
     setFormData: React.Dispatch<React.SetStateAction<any>>,
     setIsRecording: (state: boolean) => void,
-    inputIds: string[]
+    inputIds: string[],
+    language: string
 ) => {
 
     const patientDetailsFields = [
@@ -198,15 +197,15 @@ export const checkAndPromptMissingDetails = async (
     // Special check for dateOfBirth
     if (!formData.dateOfBirth) {
         const dobMessage = "Please provide your date of birth. Say the day, month, and year.";
-        const audioSrc = await getSynthesizeText(dobMessage);
+        const audioSrc = await getSynthesizeText(dobMessage, language);
 
         if (audioSrc) {
             await playAudio(audioSrc);
-            const transcribedText = await handleStartRecord(setIsRecording);
+            const transcribedText = await handleStartRecord(setIsRecording, language);
             if (transcribedText) {
                 const parsedJson = await extractFromModel(transcribedText, formData, inputIds);
                 setFormData(parsedJson);
-                await checkAndPromptMissingDetails(parsedJson, setFormData, setIsRecording, inputIds);
+                await checkAndPromptMissingDetails(parsedJson, setFormData, setIsRecording, inputIds, language);
                 return;
             }
         } else {
@@ -217,16 +216,17 @@ export const checkAndPromptMissingDetails = async (
     // Prompt for other missing fields
     if (missingFields.length > 0) {
         const missingFieldsText = missingFields.join(', ');
-        const message = formatString(MISSING_DETAILS_PROMPT, missingFieldsText);
-        const audioSrc = await getSynthesizeText(message);
+        const text = language === 'en' ? MISSING_DETAILS_PROMPT_EN : MISSING_DETAILS_PROMPT_DE;
+        const message = formatString(text, missingFieldsText);
+        const audioSrc = await getSynthesizeText(message, language);
 
         if (audioSrc) {
             await playAudio(audioSrc);
-            const transcribedText = await handleStartRecord(setIsRecording);
+            const transcribedText = await handleStartRecord(setIsRecording, language);
             if (transcribedText) {
                 const parsedJson = await extractFromModel(transcribedText, formData, inputIds);
                 setFormData(parsedJson);
-                await checkAndPromptMissingDetails(parsedJson, setFormData, setIsRecording, inputIds);
+                await checkAndPromptMissingDetails(parsedJson, setFormData, setIsRecording, inputIds, language);
             }
         } else {
             console.error("Failed to get audio source.");
@@ -247,17 +247,18 @@ export const checkAndPromptMissingDetails = async (
 
     if (missingFields.length > 0) {
         const missingFieldsText = missingFields.join(", ");
-        const message = formatString(MORE_DETAILS_PROMPT, missingFieldsText);
-        const audioSrc = await getSynthesizeText(message);
+        const text = language === 'en' ? MISSING_DETAILS_PROMPT_EN : MISSING_DETAILS_PROMPT_DE;
+        const message = formatString(text, missingFieldsText);
+        const audioSrc = await getSynthesizeText(message, language);
 
         if (audioSrc) {
             await playAudio(audioSrc);
-            const transcribedText = await handleStartRecord(setIsRecording);
+            const transcribedText = await handleStartRecord(setIsRecording, language);
 
             if (transcribedText) {
                 const parsedJson = await extractFromModel(transcribedText, formData, inputIds);
                 setFormData(parsedJson);
-                await checkAndPromptMissingDetails(parsedJson, setFormData, setIsRecording, inputIds);
+                await checkAndPromptMissingDetails(parsedJson, setFormData, setIsRecording, inputIds, language);
                 return;
             }
         } else {
@@ -268,16 +269,16 @@ export const checkAndPromptMissingDetails = async (
     // Step 3: Ask for treatmentDescription only if medicalTreatments is "yes"
     if (formData.medicalTreatments?.toLowerCase() === "yes" && !formData.treatmentDescription) {
         const message = "Please describe the medical treatments you have received.";
-        const audioSrc = await getSynthesizeText(message);
+        const audioSrc = await getSynthesizeText(message, language);
 
         if (audioSrc) {
             await playAudio(audioSrc);
-            const transcribedText = await handleStartRecord(setIsRecording);
+            const transcribedText = await handleStartRecord(setIsRecording, language);
 
             if (transcribedText) {
                 const parsedJson = await extractFromModel(transcribedText, formData);
                 setFormData(parsedJson);
-                await checkAndPromptMissingDetails(parsedJson, setFormData, setIsRecording, inputIds);
+                await checkAndPromptMissingDetails(parsedJson, setFormData, setIsRecording, inputIds, language);
                 return;
             }
         } else {
@@ -286,7 +287,8 @@ export const checkAndPromptMissingDetails = async (
     }
 
     // Step 4: Confirmation Message
-    const thankYouAudioSource = await getSynthesizeText(THANK_YOU_MESSAGE);
+    const thankYouMessage = language === 'en' ? THANK_YOU_MESSAGE_EN : THANK_YOU_MESSAGE_DE;
+    const thankYouAudioSource = await getSynthesizeText(thankYouMessage, language);
     if (thankYouAudioSource) {
         await playAudio(thankYouAudioSource);
     } else {

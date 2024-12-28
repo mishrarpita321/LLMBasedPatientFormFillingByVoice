@@ -22,6 +22,10 @@ interface FormContextType {
     setFormData: React.Dispatch<React.SetStateAction<FormData>>;
     isPlaying: boolean;
     setIsPlaying: React.Dispatch<React.SetStateAction<boolean>>;
+    language: string;
+    setLanguage: React.Dispatch<React.SetStateAction<string>>;
+    inputIds: string[];
+    setInputIds: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 // Create context with undefined initial value
