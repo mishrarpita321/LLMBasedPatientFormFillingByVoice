@@ -15,8 +15,6 @@ const VoiceInputButton: React.FC = () => {
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  console.log('language:', language);
-
   const preloadAudio = async () => {
     try {
       const endpoint = `https://texttospeech.googleapis.com/v1beta1/text:synthesize?key=${ttsKey}`;
@@ -26,7 +24,6 @@ const VoiceInputButton: React.FC = () => {
         voice: { languageCode: language === 'en' ? ENGLISH_LANGUAGE_CODE : GERMAN_LANGUAGE_CODE, name: language === 'en' ? ENGLISH_LANGUAGE_NAME : GERMAN_LANGUAGE_NAME },
       };
 
-      console.log('payload:', payload);
       const response = await axios.post(endpoint, payload);
       setAudioSrc(`data:audio/mp3;base64,${response.data.audioContent}`);
     } catch (error) {
@@ -45,7 +42,7 @@ const VoiceInputButton: React.FC = () => {
     audio.play();
     audio.onended = () => {
       setIsPlaying(false);
-      navigate('/form');
+      navigate('/formTest');
     };
   };
 

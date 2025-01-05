@@ -3,8 +3,8 @@ import Grid from '@mui/material/Grid2';
 import { Typography, TextField, Radio, RadioGroup, FormControlLabel, FormLabel, Select, MenuItem, Container, Checkbox, FormControl, InputLabel } from '@mui/material';
 import { FaStethoscope } from "react-icons/fa";
 import { useContext, useEffect, useRef } from 'react';
-import { FormContext } from '../../context/Context';
-import MicrophoneButton from '../animation/Button/MicrophoneButton';
+import { FormContext } from '../context/Context';
+import MicrophoneButton from '../components/animation/Button/MicrophoneButton';
 
 export default function Form() {
     const formRef = useRef<HTMLDivElement>(null);

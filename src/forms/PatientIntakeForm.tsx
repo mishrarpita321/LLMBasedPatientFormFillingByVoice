@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styles from './PatientIntakeForm.module.css';
-import { fillForm, fillFormByVoice } from 'form-field-extractor';
+import { fillFormByText, fillFormByVoice } from 'form-field-extractor';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'; // Don't forget to import styles
 import { WELCOME_MESSAGE_EN } from '../constants/constants';
@@ -40,7 +40,7 @@ const PatientIntakeForm: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const extractedData = await fillForm('user-form', token, formData.testinput);
+        const extractedData = await fillFormByText('user-form', token, formData.testinput);
         setFormData((prevState) => ({
             ...prevState,
             ...extractedData,

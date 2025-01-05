@@ -1,7 +1,7 @@
-export const DATA_EXTRACTION_PROMPT = `You are a data extraction assistant. Extract relevant information and persist it in JSON format. Merge previous context if available. Required keys: %s.
-First and Last Name: Ensure they start with a capital letter.
+export const DATA_EXTRACTION_PROMPT = `First and Last Name: Ensure they start with a capital letter.
 Email: Ensure it is lowercase and without spaces.
-Date of Birth: Ensure it is in the format YYYY-MM-DD.
+Date of Birth: Ensure it is in the format YYYY-MM-DD.'
+Gender: male, female or others.
 Insurance Type: Respond only as 'public' or 'private' (no other text).
 Insurance Number: Ensure no spaces and use uppercase letters only.
 MedicalTreatments: Yes or No.
@@ -9,7 +9,7 @@ TreatmentDescription: If medical treatment is Yes, provide a description if not 
 
 export const WELCOME_MESSAGE_DE = "Hallo! Willkommen in unserer Klinik. Ich werde Ihnen helfen, ein kurzes Aufnahmeformular auszufüllen. Sie können jede Frage laut beantworten. Lassen Sie uns anfangen! Bitte nennen Sie mir Ihren Vor- und Nachnamen.";
 
-export const WELCOME_MESSAGE_EN = "Hello! Welcome to our clinic. I’ll be helping you fill out a quick intake form. You can answer each question out loud. Let’s get started! Please tell me your first name and last name.";
+export const WELCOME_MESSAGE_EN = "Hello! Welcome to our clinic. I’ll be helping you fill out a quick intake form. You can answer each question out loud. Let’s get started by clicking on mic button.";
 
 export const ENGLISH_LANGUAGE_CODE = "en-US";
 
