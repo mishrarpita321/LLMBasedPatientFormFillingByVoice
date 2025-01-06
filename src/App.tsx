@@ -5,6 +5,7 @@ import { FormProvider } from './provider/ContextProvider'
 import PatientIntakeForm from './forms/PatientIntakeForm'
 import "/node_modules/flag-icons/css/flag-icons.min.css";
 import FormTest from './components/form/FormTest'
+import FlightBookingForm from './forms/FlightBookingForm'
 
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
           <Route path="/formTest" element={<FormTest />} />
           <Route path="/form" element={<Form />} />
           <Route path="/patient" element={<PatientIntakeForm />} />
+          <Route path="/flightBooking" element={<FlightBookingForm />} />
         </Routes>
       </BrowserRouter>
     </FormProvider>

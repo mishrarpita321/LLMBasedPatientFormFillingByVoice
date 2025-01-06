@@ -20,7 +20,7 @@
     "@testing-library/react": "^16.1.0",
     "axios": "^1.7.9",
     "flag-icons": "^7.2.3",
-    "form-field-extractor": "file:form-field-extractor-1.0.1.tgz",
+    "form-field-extractor": "file:form-field-extractor-1.0.2.tgz",
     "framer-motion": "^11.13.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
