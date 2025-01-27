@@ -3,8 +3,6 @@ import styles from './PatientIntakeForm.module.css';
 import { fillFormByText, fillFormByVoice } from 'form-field-extractor';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'; // Don't forget to import styles
-const token = import.meta.env.VITE_GPT_API_KEY;
-const ttsKey = import.meta.env.VITE_TTS_API_KEY;
 
 interface PatientFormData {
     firstName: string;
@@ -40,7 +38,7 @@ const PatientIntakeForm: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const extractedData = await fillFormByText('user-form', token, formData.testinput);
+        const extractedData = await fillFormByText('user-form', formData.testinput);
         setFormData((prevState) => ({
             ...prevState,
             ...extractedData,
@@ -49,7 +47,7 @@ const PatientIntakeForm: React.FC = () => {
 
     const triggerVoice = async (e: React.FormEvent) => {
         e.preventDefault();
-        const extractedData = await fillFormByVoice('user-form', token, ttsKey, prompt);
+        const extractedData = await fillFormByVoice('user-form', prompt);
         setFormData((prevState) => ({
             ...prevState,
             ...(typeof extractedData === 'object' && extractedData !== null ? extractedData : {}),
