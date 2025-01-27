@@ -3,8 +3,7 @@ import styles from './FlightBookingForm.module.css';
 import { fillFormByText, fillFormByVoice } from 'form-field-extractor';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'; // Don't forget to import styles
-const token = import.meta.env.VITE_GPT_API_KEY;
-const ttsKey = import.meta.env.VITE_TTS_API_KEY;
+import { travelPrompt } from '../constants/constants';
 
 interface FlightBookingData {
     passengerName: string;
@@ -13,6 +12,7 @@ interface FlightBookingData {
     departureCity: string;
     destinationCity: string;
     departureDate: string;
+    travelType: string;
     returnDate: string;
     numberOfPassengers: string;
     travelClass: string;
@@ -26,6 +26,7 @@ const FlightBookingForm: React.FC = () => {
         phoneNumber: '',
         departureCity: '',
         destinationCity: '',
+        travelType: '',
         departureDate: '',
         returnDate: '',
         numberOfPassengers: '',
@@ -44,7 +45,7 @@ const FlightBookingForm: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const startExtraction = performance.now();
-        const extractedData = await fillFormByText('flight-booking-form', token, formData.additionalRequests);
+        const extractedData = await fillFormByText('flight-booking-form', formData.additionalRequests);
         const endExtraction = performance.now();
         console.log(`Time taken for model extraction: ${endExtraction - startExtraction} ms`);
 
@@ -56,7 +57,7 @@ const FlightBookingForm: React.FC = () => {
 
     const triggerVoice = async (e: React.FormEvent) => {
         e.preventDefault();
-        const extractedData = await fillFormByVoice('flight-booking-form', token, ttsKey);
+        const extractedData = await fillFormByVoice('flight-booking-form', travelPrompt);
         setFormData((prevState) => ({
             ...prevState,
             ...(typeof extractedData === 'object' && extractedData !== null ? extractedData : {}),
@@ -81,88 +82,13 @@ const FlightBookingForm: React.FC = () => {
             phoneNumber: '',
             departureCity: '',
             destinationCity: '',
+            travelType: '',
             departureDate: '',
             returnDate: '',
             numberOfPassengers: '',
             travelClass: '',
             additionalRequests: '',
         });
-    };
-
-    const extractDataWithRegex = (inputText: string) => {
-        const regexPatterns = {
-            passengerName: /Passenger Name:\s*(.+)/i,
-            email: /Email:\s*([\w.%+-]+@[a-zA-Z.-]+\.[a-zA-Z]{2,})/i,
-            phoneNumber: /Phone Number:\s*(\d{10,15})/i,
-            departureCity: /Departure City:\s*(.+)/i,
-            destinationCity: /Destination City:\s*(.+)/i,
-            departureDate: /Departure Date:\s*(\d{4}-\d{2}-\d{2})/i,
-            returnDate: /Return Date:\s*(\d{4}-\d{2}-\d{2})/i,
-            numberOfPassengers: /Number of Passengers:\s*(\d+)/i,
-            travelClass: /Travel Class:\s*(economy|business|first-class)/i,
-            additionalRequests: /Additional Requests:\s*(.+)/i,
-        };
-
-        const extractedData: Partial<FlightBookingData> = {};
-
-        for (const [key, regex] of Object.entries(regexPatterns)) {
-            const match = inputText.match(regex);
-            extractedData[key as keyof FlightBookingData] = match ? match[1] : '';
-        }
-
-        return extractedData;
-    };
-
-    const handleComparison = async (e: React.FormEvent) => {
-        e.preventDefault();
-        //     const sampleInputText = `
-        //     Passenger Name: John Doe
-        //     Email: john.doe@example.com
-        //     Phone Number: 1234567890
-        //     Departure City: New York
-        //     Destination City: Los Angeles
-        //     Departure Date: 2025-01-15
-        //     Return Date: 2025-01-20
-        //     Number of Passengers: 2
-        //     Travel Class: economy
-        //     Additional Requests: Window seat preferred
-        // `;
-        const sampleInputText = `
-        Arpita. Flight: Delhi to Berlin. Date: 05-03-2025. Window seat. Vegetarian. travelling alone in economy class returning on 31st march 2025. mail is test@gmail.com , num: 7978640399
-        `;
-
-        // Model-based extraction
-        const modelExtractedData = await fillFormByText('flight-booking-form', token, sampleInputText);
-        console.log('Model extracted data:', modelExtractedData);
-
-        // Regex-based extraction
-        const startRegex = performance.now();
-        const regexExtractedData = extractDataWithRegex(sampleInputText);
-        const endRegex = performance.now();
-        console.log(`Regex extraction time: ${endRegex - startRegex} ms`);
-
-        // Form filling
-        // console.log('Filling form with model data...');
-        // const 
-        // const transformedModelData = modelExtractedData.reduce((acc, { id, value }) => {
-        //     acc[id as keyof FlightBookingData] = value;
-        //     return acc;
-        // }, {} as Partial<FlightBookingData>);
-        // fillFormFields(transformedModelData, setFormData);
-
-        console.log('Filling form with regex data...');
-        const startFill = performance.now();
-        fillFormFields(regexExtractedData, setFormData);
-        const endFill = performance.now();
-        console.log(`Form filling time by regex data: ${endFill - startFill} ms`);
-    };
-
-    const fillFormFields = (data: Partial<FlightBookingData>, setFormData: React.Dispatch<React.SetStateAction<FlightBookingData>>) => {
-        setFormData((prevState) => ({
-            ...prevState,
-            ...data,
-        }));
-        console.log('Form filled with regex data:', formData);
     };
 
     return (
@@ -222,6 +148,34 @@ const FlightBookingForm: React.FC = () => {
                         value={formData.destinationCity}
                         onChange={handleChange}
                     />
+                </div>
+
+                <div className={styles.formGroup}>
+                    <label>Travel Type</label>
+                    <div className={styles.checkboxGroup}>
+                        <label>
+                            <input
+                                type="checkbox"
+                                name="travelType"
+                                id="travelType"
+                                value="one-way"
+                                checked={formData.travelType === 'one-way'}
+                                onChange={handleChange}
+                            />
+                            One-way
+                        </label>
+                        <label>
+                            <input
+                                type="checkbox"
+                                name="travelType"
+                                id="travelType"
+                                value="round-trip"
+                                checked={formData.travelType === 'round-trip'}
+                                onChange={handleChange}
+                            />
+                            Round-trip
+                        </label>
+                    </div>
                 </div>
 
                 <div className={styles.formGroup}>
@@ -287,7 +241,7 @@ const FlightBookingForm: React.FC = () => {
                     <button onClick={handleSubmit}>Text</button>
                     <button onClick={triggerVoice}>Voice</button>
                     <button onClick={(e) => formSubmit(e)}>Form Submit</button>
-                    <button onClick={handleComparison}>Compare Extraction Methods</button>
+                    {/* <button onClick={handleComparison}>Compare Extraction Methods</button> */}
                 </div>
             </form>
             <ToastContainer />

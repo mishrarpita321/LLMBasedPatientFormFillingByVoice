@@ -8,13 +8,12 @@ import styles from './MicrophoneButton.module.css';
 import { DATA_EXTRACTION_PROMPT, FORM_SUBMISSION_MESSAGE_DE, FORM_SUBMISSION_MESSAGE_EN } from '../../constants/constants';
 import { useNavigate } from 'react-router-dom';
 import { getSynthesizeText } from '../../utility/utils';
-
-const token = import.meta.env.VITE_GPT_API_KEY;
-const ttsKey = import.meta.env.VITE_TTS_API_KEY;
+import SoundWave from '../voiceinput/SoundWave';
 
 export default function MicButton() {
   const formContext = useContext(FormContext);
   const [isRecording, setIsRecording] = useState(false); // Tracks microphone state
+  const [isPlaying, setIsPlaying] = useState(false);
   const navigate = useNavigate();
   if (!formContext) {
     throw new Error('MicButton must be used within a FormProvider');
@@ -25,15 +24,21 @@ export default function MicButton() {
   // Check if all form details are collected
   const allDetailsCollected = Object.values(formData).every((value) => value);
 
+  const statusCallback = (status: { isPlaying: boolean; isRecording: boolean }) => {
+    setIsPlaying(status.isPlaying);
+    setIsRecording(status.isRecording);
+  };
+
+  console.log(isPlaying, isRecording);
+
   // Handle microphone click logic
   const handleMicClick = async () => {
-    setIsRecording(true); // Start recording
     try {
       const extractedData = await fillFormByVoice(
         'user-form',
-        token,
-        ttsKey,
         DATA_EXTRACTION_PROMPT,
+        language,
+        statusCallback
       );
 
       // Update form data with extracted data
@@ -63,7 +68,7 @@ export default function MicButton() {
         draggable: true,
       });
     } finally {
-      setIsRecording(false); // Stop recording after completion
+      console.log('Form data:', formData);
     }
   };
 
@@ -99,35 +104,39 @@ export default function MicButton() {
   };
 
   return (
-    <Button
-      variant="contained"
-      onClick={allDetailsCollected ? handleSubmit : handleMicClick}
-      className={`${styles.microphoneButton} ${isRecording ? styles.speaking : ''
-        }`}
-      sx={{
-        backgroundColor: '#4CAF50',
-        width: isRecording || allDetailsCollected ? '160px' : '80px',
-        height: '80px',
-        borderRadius: '40px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '10px',
-        transition: 'all 0.3s ease-in-out',
-      }}
-    >
-      {allDetailsCollected ? (
-        <span style={{ fontSize: '20px' }}>Submit</span>
-      ) : (
-        <>
-          <FaMicrophone
-            className={isRecording ? styles.iconActive : styles.iconDefault}
-            size={30}
-            color="#fff"
-          />
-          {isRecording && <span>Listening...</span>}
-        </>
-      )}
-    </Button>
+    <div className="flex items-center justify-center space-x-8">
+      {isPlaying && <SoundWave isPlaying={isPlaying} />}
+      <Button
+        variant="contained"
+        onClick={allDetailsCollected ? handleSubmit : handleMicClick}
+        className={`${styles.microphoneButton} ${isRecording ? styles.speaking : ''
+          }`}
+        sx={{
+          backgroundColor: '#4CAF50',
+          width: isRecording || allDetailsCollected ? '160px' : '80px',
+          height: '80px',
+          borderRadius: '40px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '10px',
+          transition: 'all 0.3s ease-in-out',
+        }}
+      >
+        {allDetailsCollected ? (
+          <span style={{ fontSize: '20px' }}>Submit</span>
+        ) : (
+          <>
+            <FaMicrophone
+              // className={isRecording ? styles.iconActive : styles.iconDefault}
+              size={30}
+              color="#fff"
+            />
+            {isRecording && <span>Listening...</span>}
+          </>
+        )}
+      </Button>
+      {isPlaying && <SoundWave isPlaying={isPlaying} />}
+    </div>
   );
 }

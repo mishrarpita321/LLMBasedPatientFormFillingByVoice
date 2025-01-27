@@ -235,8 +235,8 @@ const PatientIntakeForm = () => {
                                     id="medicalTreatments"
                                     name="medicalTreatments"
                                     value={formData.medicalTreatments}
+                                    className={styles.medicalTreatments}
                                     onChange={handleChange}
-                                    style={{ border: "1px solid #ccc", borderRadius: '4px', padding: '5px' }}
                                 >
                                     <option value="">Select</option>
                                     <option value="Yes">Yes</option>

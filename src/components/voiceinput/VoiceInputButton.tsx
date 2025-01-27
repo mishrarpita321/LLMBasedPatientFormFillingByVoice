@@ -64,7 +64,7 @@ const VoiceInputButton: React.FC = () => {
       >
         {isPlaying
           ? (language === 'en' ? 'Listening...' : 'Hören...')
-          : (language === 'en' ? 'Start Voice Input' : 'Stimmeingabe starten')}
+          : (language === 'en' ? 'Start' : 'Starten')}
       </button>
     </Box>
   );

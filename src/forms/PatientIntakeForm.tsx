@@ -36,6 +36,7 @@ const PatientIntakeForm: React.FC = () => {
             [name]: value,
         }));
     };
+    const prompt = "Medical history: if user doesnt have any medical history, respond with 'none'. If user has medical history, provide a brief description.";
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -48,7 +49,7 @@ const PatientIntakeForm: React.FC = () => {
 
     const triggerVoice = async (e: React.FormEvent) => {
         e.preventDefault();
-        const extractedData = await fillFormByVoice('user-form', token, ttsKey);
+        const extractedData = await fillFormByVoice('user-form', token, ttsKey, prompt);
         setFormData((prevState) => ({
             ...prevState,
             ...(typeof extractedData === 'object' && extractedData !== null ? extractedData : {}),

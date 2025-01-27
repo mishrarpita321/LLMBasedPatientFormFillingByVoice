@@ -6,6 +6,7 @@ import PatientIntakeForm from './forms/PatientIntakeForm'
 import "/node_modules/flag-icons/css/flag-icons.min.css";
 import FormTest from './components/form/FormTest'
 import FlightBookingForm from './forms/FlightBookingForm'
+import DataExtractor from './components/DataExtracter'
 
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
           <Route path="/form" element={<Form />} />
           <Route path="/patient" element={<PatientIntakeForm />} />
           <Route path="/flightBooking" element={<FlightBookingForm />} />
+          <Route path="/dataExtracter" element={<DataExtractor />} />
         </Routes>
       </BrowserRouter>
     </FormProvider>
