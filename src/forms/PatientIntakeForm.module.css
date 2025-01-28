@@ -1,0 +1,59 @@
+/* src/components/PatientIntakeForm.module.css */
+.formContainer {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+  }
+  
+  h2 {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .formGroup {
+    margin-bottom: 15px;
+  }
+  
+  label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  
+  input, textarea {
+    width: 100%;
+    padding: 8px;
+    font-size: 16px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+  }
+  
+  .buttonGroup {
+    display: flex;
+    gap: 10px; /* Space between buttons */
+    margin-bottom: 15px;
+    justify-content: center;
+  }
+  
+  .buttonGroup button {
+    padding: 10px 15px; /* Adjust padding */
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #007BFF; /* Primary button color */
+    color: white;
+    transition: background-color 0.3s;
+  }
+  
+  .buttonGroup button:hover {
+    background-color: #0056b3; /* Darker shade on hover */
+  }
+  
+  .buttonGroup button:active {
+    background-color: #004080; /* Even darker shade on click */
+  }
+  

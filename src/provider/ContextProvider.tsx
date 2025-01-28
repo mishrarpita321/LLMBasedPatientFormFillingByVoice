@@ -13,7 +13,7 @@ const initialFormData: FormData = {
     dateOfBirth: "",
     email: "",
     firstName: "",
-    gender: "female",
+    gender: "",
     insuranceNumber: "",
     insuranceType: "",
     lastName: "",
@@ -26,9 +26,11 @@ export const FormProvider: React.FC<FormProviderProps> = ({ children }) => {
     // Use specific type for form data
     const [formData, setFormData] = useState<FormData>(initialFormData);
     const [isPlaying, setIsPlaying] = useState(false);
+    const [language, setLanguage] = useState("en");
+    const [inputIds, setInputIds] = useState<string[]>([]);
 
     return (
-        <FormContext.Provider value={{ formData, setFormData, isPlaying, setIsPlaying }}>
+        <FormContext.Provider value={{ formData, setFormData, isPlaying, setIsPlaying, language, setLanguage, inputIds, setInputIds }}>
             {children}
         </FormContext.Provider>
     );

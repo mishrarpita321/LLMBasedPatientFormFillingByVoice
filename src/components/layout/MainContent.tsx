@@ -1,9 +1,6 @@
-import React from 'react';
 import ClinicImage from '../ClinicImage';
 import VoiceInputSection from '../voiceinput/VoiceInputSection';
 import WelcomeHeader from '../WelcomeHeader';
-
-
 
 const MainContent: React.FC= () => {
   return (

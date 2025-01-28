@@ -1,12 +1,12 @@
 import axios from "axios";
-import { DATA_EXTRACTION_PROMPT, ENGLISH_LANGUAGE_CODE, MISSING_DETAILS_PROMPT, MORE_DETAILS_PROMPT, THANK_YOU_MESSAGE } from "../constants/constants";
+import { DATA_EXTRACTION_PROMPT, ENGLISH_LANGUAGE_CODE, ENGLISH_LANGUAGE_NAME, GERMAN_LANGUAGE_CODE, GERMAN_LANGUAGE_NAME, MISSING_DETAILS_PROMPT_DE, MISSING_DETAILS_PROMPT_EN, THANK_YOU_MESSAGE_DE, THANK_YOU_MESSAGE_EN } from "../constants/constants";
 import React from "react";
 const url = "https://api.openai.com/v1/chat/completions";
 const token = import.meta.env.VITE_GPT_API_KEY;
 const ttsKey = import.meta.env.VITE_TTS_API_KEY;
 
 //Handle Text to Speech
-export const getSynthesizeText = async (text: string) => {
+export const getSynthesizeText = async (text: string, language: string) => {
     console.log("Text to Synthesize:", text);
     // const { navigate, formData, setFormData } = speechProps;
     const endpoint = `https://texttospeech.googleapis.com/v1beta1/text:synthesize?key=${ttsKey}`;
@@ -19,8 +19,8 @@ export const getSynthesizeText = async (text: string) => {
         },
         input: { text },
         voice: {
-            languageCode: "en-US",
-            name: "en-US-Journey-F",
+            languageCode: language === 'en' ? ENGLISH_LANGUAGE_CODE : GERMAN_LANGUAGE_CODE,
+            name: language === 'en' ? ENGLISH_LANGUAGE_NAME : GERMAN_LANGUAGE_NAME,
         },
     };
 
@@ -83,9 +83,9 @@ export const playAudio = async (
 };
 
 // Handles SpeechRecognition using Web Speech API
-export const handleStartRecord = (setIsRecording: (state: boolean) => void): Promise<string> => {
+export const handleStartRecord = (setIsRecording: (state: boolean) => void, language: string): Promise<string> => {
+    setIsRecording(true); // Update recording state
     return new Promise((resolve, reject) => {
-        console.log("Starting speech recognition...");
         try {
             const SpeechRecognition =
                 (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -97,10 +97,9 @@ export const handleStartRecord = (setIsRecording: (state: boolean) => void): Pro
             }
 
             const recognition = new SpeechRecognition();
-            recognition.lang = ENGLISH_LANGUAGE_CODE;
+            recognition.lang = language === 'en' ? ENGLISH_LANGUAGE_CODE : GERMAN_LANGUAGE_CODE;
 
             // Start recognition
-            setIsRecording(true); // Update recording state
             recognition.start();
 
             recognition.onresult = (event: any) => {
@@ -129,13 +128,16 @@ export const handleStartRecord = (setIsRecording: (state: boolean) => void): Pro
 };
 
 // Extract data from the model
-export const extractFromModel = async (transcribedText: string, formData: Record<string, any>) => {
+export const extractFromModel = async (transcribedText: string, formData: Record<string, any>, inputIds: string[] | null = null) => {
+    console.log("Extracting data from model...", formatString(DATA_EXTRACTION_PROMPT, inputIds ? inputIds.join(', ') : ''));
     const requestData = {
         model: "gpt-4o-mini",
         messages: [
             {
                 role: "system",
-                content: DATA_EXTRACTION_PROMPT
+                // content: DATA_EXTRACTION_PROMPT,
+                content: formatString(DATA_EXTRACTION_PROMPT, inputIds ? inputIds.join(', ') : ''),
+                // content: `You are a helpful assistant and you only reply with JSON. Extract only the following keys from the provided text: Required keys: ${inputIds}. Empty values for missing keys.`,
             },
             {
                 role: "user",
@@ -147,6 +149,9 @@ export const extractFromModel = async (transcribedText: string, formData: Record
                 content: `New Input: ${transcribedText}`
             }
         ],
+        response_format: {
+            type: "json_object",
+        },
         temperature: 0.7
     };
 
@@ -154,164 +159,188 @@ export const extractFromModel = async (transcribedText: string, formData: Record
         const response = await axios.post(url, requestData, {
             headers: { Authorization: `Bearer ${token}` },
         });
-        const content = response.data.choices[0].message.content
-        const jsonResponse = content.replace(/```json\n|\n```/g, '').trim();
-        const parsedJson = JSON.parse(jsonResponse);
-        return parsedJson;
+        const data = response.data;
+        const completion = JSON.parse(data.choices[0].message.content);
+        console.log("Extracted Data:", completion);
+        // const content = response.data.choices[0].message.content
+        // const jsonResponse = content.replace(/```json\n|\n```/g, '').trim();
+        // const parsedJson = JSON.parse(jsonResponse);
+        // console.log("Parsed JSON:", parsedJson);
+        return completion;
     } catch (error) {
         console.error("LLM Error:", error);
     }
 };
 
 // Check for missing details and prompt the user
-export const checkAndPromptMissingDetails = async (formData: Record<string, any>, setFormData: React.Dispatch<React.SetStateAction<any>>, setIsRecording: (state: boolean) => void) => {
+export const checkAndPromptMissingDetails = async (
+    formData: Record<string, any>,
+    setFormData: React.Dispatch<React.SetStateAction<any>>,
+    setIsRecording: (state: boolean) => void,
+    inputIds: string[],
+    language: string
+) => {
+
     const patientDetailsFields = [
-        "firstName", "lastName", "dateOfBirth", "gender", "city", "country", "insuranceType", "insuranceNumber", "email"
+        "firstName", "lastName", "gender", "city", "country",
+        "insuranceType", "insuranceNumber", "email"
     ];
     let missingFields: string[] = [];
 
-    // Collect missing fields from Patient Details
+    // Check for missing fields except dateOfBirth
     patientDetailsFields.forEach(field => {
         if (!formData[field]) {
             missingFields.push(field);
         }
     });
 
-    if (missingFields.length > 0) {
-        // If there are missing fields in the Patient Details, prompt the user for each missing field
-        const missingFieldsText = missingFields.join(', '); // Create a message with missing fields
-        const message: string = formatString(MISSING_DETAILS_PROMPT, missingFieldsText);
+    // Special check for dateOfBirth
+    if (!formData.dateOfBirth) {
+        const dobMessage = "Please provide your date of birth. Say the day, month, and year.";
+        const audioSrc = await getSynthesizeText(dobMessage, language);
 
-        const audioSrc = await getSynthesizeText(message);
         if (audioSrc) {
             await playAudio(audioSrc);
-            const transcribedText = await handleStartRecord(setIsRecording);
-
+            const transcribedText = await handleStartRecord(setIsRecording, language);
             if (transcribedText) {
-                const parsedJson = await extractFromModel(transcribedText, formData);
+                const parsedJson = await extractFromModel(transcribedText, formData, inputIds);
                 setFormData(parsedJson);
-                checkAndPromptMissingDetails(parsedJson, setFormData, setIsRecording);
+                await checkAndPromptMissingDetails(parsedJson, setFormData, setIsRecording, inputIds, language);
+                return;
             }
         } else {
-            console.error("Failed to get audio source");
+            console.error("Failed to get audio source for date of birth.");
         }
-
-        return; // Stop here if there are missing patient details
     }
 
-    // If Patient Details are complete, check More Information section for missing fields
-    const moreInformationFields = [
-        "visitReason", "medicalTreatments", "treatmentDescription"
-    ];
-    missingFields = [];
+    // Prompt for other missing fields
+    if (missingFields.length > 0) {
+        const missingFieldsText = missingFields.join(', ');
+        const text = language === 'en' ? MISSING_DETAILS_PROMPT_EN : MISSING_DETAILS_PROMPT_DE;
+        const message = formatString(text, missingFieldsText);
+        const audioSrc = await getSynthesizeText(message, language);
 
-    // Collect missing fields from More Information section
-    moreInformationFields.forEach(field => {
+        if (audioSrc) {
+            await playAudio(audioSrc);
+            const transcribedText = await handleStartRecord(setIsRecording, language);
+            if (transcribedText) {
+                const parsedJson = await extractFromModel(transcribedText, formData, inputIds);
+                setFormData(parsedJson);
+                await checkAndPromptMissingDetails(parsedJson, setFormData, setIsRecording, inputIds, language);
+            }
+        } else {
+            console.error("Failed to get audio source.");
+        }
+        return;
+    }
+
+    // Check More Information fields
+    // Step 2: Check More Information (visitReason and medicalTreatments)
+    missingFields = [];
+    const moreInfoFields = ["visitReason", "medicalTreatments"];
+
+    moreInfoFields.forEach(field => {
         if (!formData[field]) {
             missingFields.push(field);
         }
     });
 
     if (missingFields.length > 0) {
-        // If there are missing fields in the More Information section, prompt the user for each missing field
-        const missingFieldsText = missingFields.join(', '); // Create a message with missing fields
-        const message: string = formatString(MORE_DETAILS_PROMPT, missingFieldsText);
+        const missingFieldsText = missingFields.join(", ");
+        const text = language === 'en' ? MISSING_DETAILS_PROMPT_EN : MISSING_DETAILS_PROMPT_DE;
+        const message = formatString(text, missingFieldsText);
+        const audioSrc = await getSynthesizeText(message, language);
 
-        // Call the TTS function to ask the user for the missing details
-        const audioSrc = await getSynthesizeText(message);
         if (audioSrc) {
             await playAudio(audioSrc);
-            const transcribedText = await handleStartRecord(setIsRecording);
+            const transcribedText = await handleStartRecord(setIsRecording, language);
+
+            if (transcribedText) {
+                const parsedJson = await extractFromModel(transcribedText, formData, inputIds);
+                setFormData(parsedJson);
+                await checkAndPromptMissingDetails(parsedJson, setFormData, setIsRecording, inputIds, language);
+                return;
+            }
+        } else {
+            console.error("Failed to get audio source.");
+        }
+    }
+
+    // Step 3: Ask for treatmentDescription only if medicalTreatments is "yes"
+    if (formData.medicalTreatments?.toLowerCase() === "yes" && !formData.treatmentDescription) {
+        const message = "Please describe the medical treatments you have received.";
+        const audioSrc = await getSynthesizeText(message, language);
+
+        if (audioSrc) {
+            await playAudio(audioSrc);
+            const transcribedText = await handleStartRecord(setIsRecording, language);
 
             if (transcribedText) {
                 const parsedJson = await extractFromModel(transcribedText, formData);
                 setFormData(parsedJson);
-                checkAndPromptMissingDetails(parsedJson, setFormData, setIsRecording);
+                await checkAndPromptMissingDetails(parsedJson, setFormData, setIsRecording, inputIds, language);
+                return;
             }
         } else {
-            console.error("Failed to get audio source");
-        }
-    } else {
-        // If all fields are complete, you can either proceed to the next step or display a success message.
-        const thankYouAudioSource = await getSynthesizeText(THANK_YOU_MESSAGE);
-
-        if (thankYouAudioSource) {
-            await playAudio(thankYouAudioSource);
-            return
-        } else {
-            console.error("Failed to get audio source for thank you message");
+            console.error("Failed to get audio source for treatment description.");
         }
     }
+
+    // Step 4: Confirmation Message
+    const thankYouMessage = language === 'en' ? THANK_YOU_MESSAGE_EN : THANK_YOU_MESSAGE_DE;
+    const thankYouAudioSource = await getSynthesizeText(thankYouMessage, language);
+    if (thankYouAudioSource) {
+        await playAudio(thankYouAudioSource);
+    } else {
+        console.error("Failed to get audio source for thank you message.");
+    }
 };
+
 
 // utils.js (or any other file you prefer)
 export function formatString(template: string, value: string): string {
     return template.replace("%s", value);
 }
 
-// export const speakWelcomeMessage = (onStart: () => void, onEnd: () => void) => {
-//     onStart();
-//     const speech = new SpeechSynthesisUtterance(
-//       "Welcome to Praxis Jung. Please prepare to fill out your patient intake form using voice commands. I'll guide you through the process step by step."
-//     );
 
-//     speech.onend = onEnd;
-//     window.speechSynthesis.speak(speech);
-//   };
+export const handleTranscription = async (inputIds: string[], prompt: string) => {
+    // const prompt = "My name is John Doe, I am 30 years old, born on May 15, 1993. My email is john.doe@example.com, and I live in Germany.";
+    const url = "https://api.openai.com/v1/chat/completions";
+    const token = "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";
+    // const requiredKeys = ["name", "age", "dob", "email", "country"];
+    const requestData = {
+        model: "gpt-4o-mini",
+        messages: [
+            {
+                role: "system",
+                content: `You are a helpful assistant and you only reply with JSON. Extract only the following keys from the provided text: Required keys: ${inputIds}. Empty values for missing keys.`,
+            },
+            {
+                role: "user",
+                content: prompt,
+            },
+        ],
+        response_format: {
+            type: "json_object",
+        },
+        temperature: 0.7
+    };
 
-export const speakWelcomeMessage = async (text: string, onStart: () => void, onEnd: () => void) => {
-    onStart();
     try {
-        const endpoint = `https://texttospeech.googleapis.com/v1beta1/text:synthesize?key=${ttsKey}`;
-        const payload = {
-            audioConfig: {
-                audioEncoding: "MP3",
+        const response = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
             },
-            input: { text },
-            voice: {
-                languageCode: "en-US",
-                name: "en-US-Journey-F",
-            },
-        };
-        const response = await axios.post(endpoint, payload);
-        const audio = new Audio(`data:audio/mp3;base64,${response.data.audioContent}`);
+            body: JSON.stringify(requestData),
+        });
 
-        audio.onended = onEnd;
-        audio.play();
+        const data = await response.json();
+        const completion = data.choices[0].message.content;
+        // console.log(completion);
+        return completion;
     } catch (error) {
-        console.error('Error using Google Text-to-Speech:', error);
-        onEnd();
+        console.error(error);
     }
-};
-
-// Function to check missing patient details
-export const checkPatientMissing = (formData: Record<string, any>): string[] => {
-    const patientDetailsFields = [
-        "firstName", "lastName", "dateOfBirth", "gender", "city", "country", "insuranceType", "insuranceNumber", "email"
-    ];
-    const missingFields: string[] = [];
-
-    patientDetailsFields.forEach(field => {
-        if (!formData[field]) {
-            missingFields.push(field);
-        }
-    });
-
-    return missingFields; // Returns the list of missing patient fields
-};
-
-// Function to check missing "More Information" details
-export const checkMoreDetailsMissing = (formData: Record<string, any>): string[] => {
-    const moreInformationFields = [
-        "visitReason", "medicalTreatments", "treatmentDescription"
-    ];
-    const missingFields: string[] = [];
-
-    moreInformationFields.forEach(field => {
-        if (!formData[field]) {
-            missingFields.push(field);
-        }
-    });
-
-    return missingFields; // Returns the list of missing more information fields
 };
