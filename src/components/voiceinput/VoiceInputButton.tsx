@@ -6,7 +6,6 @@ import { FormContext } from '../../context/Context';
 import axios from 'axios';
 
 const VoiceInputButton: React.FC = () => {
-  const ttsKey = import.meta.env.VITE_TTS_API_KEY;
   const formContext = useContext(FormContext);
   if (!formContext) {
     throw new Error("parseJson must be used within a FormProvider");
@@ -17,14 +16,14 @@ const VoiceInputButton: React.FC = () => {
 
   const preloadAudio = async () => {
     try {
-      const endpoint = `https://texttospeech.googleapis.com/v1beta1/text:synthesize?key=${ttsKey}`;
+      const t2sEndPoint = `https://data-fetching-proxy-ai.vercel.app/makeTextToSpeechCall`;
       const payload = {
         audioConfig: { audioEncoding: "MP3" },
         input: { text: language === 'en' ? WELCOME_MESSAGE_EN : WELCOME_MESSAGE_DE },
         voice: { languageCode: language === 'en' ? ENGLISH_LANGUAGE_CODE : GERMAN_LANGUAGE_CODE, name: language === 'en' ? ENGLISH_LANGUAGE_NAME : GERMAN_LANGUAGE_NAME },
       };
 
-      const response = await axios.post(endpoint, payload);
+      const response = await axios.post(t2sEndPoint, payload);
       setAudioSrc(`data:audio/mp3;base64,${response.data.audioContent}`);
     } catch (error) {
       console.error('Error preloading audio:', error);
