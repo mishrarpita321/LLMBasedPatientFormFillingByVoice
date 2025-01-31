@@ -1,4 +1,4 @@
-import { defineWorkspace } from 'vitest/config'
+import { defineWorkspace } from 'vitest/config.js'
 
 export default defineWorkspace([
   // If you want to keep running your existing tests in Node.js, uncomment the next line.

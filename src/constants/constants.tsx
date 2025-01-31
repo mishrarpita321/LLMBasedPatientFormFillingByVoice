@@ -10,7 +10,7 @@ TreatmentDescription: If medical treatment is Yes, provide a description if not 
 
 export const WELCOME_MESSAGE_DE = "Hallo! Willkommen in unserer Klinik. Ich helfe Ihnen dabei, ein kurzes Aufnahmeformular auszufüllen. Sie können jede Frage laut beantworten. Bitte klicken Sie auf die Mikrofontaste.";
 
-export const WELCOME_MESSAGE_EN = "Hello! Welcome to our clinic. I’ll be helping you fill out a quick intake form. You can answer each question out loud. Please click on microphone button to start.";
+export const WELCOME_MESSAGE_EN = "Hello! Welcome to our clinic. I’ll be helping you fill out a quick intake form. You can answer each question out loud. Please keep your health insurance card ready and Click on the microphone button to start.";
 
 export const ENGLISH_LANGUAGE_CODE = "en-US";
 

@@ -6,6 +6,7 @@ const DataExtractor: React.FC = () => {
     const [transcribedTextLLM, setTranscribedTextLLM] = useState('');
     const [jsonLLM, setJsonLLM] = useState('');
     const [extractionTimeLLM, setExtractionTimeLLM] = useState('');
+    const [loading, setLoading] = useState(false);
 
     const [transcribedTextRegex, setTranscribedTextRegex] = useState('');
     const [jsonRegex, setJsonRegex] = useState('');
@@ -13,12 +14,20 @@ const DataExtractor: React.FC = () => {
 
 
     const handleExtractLLM = async () => {
-        const startExtractionTime = performance.now();
-        const json = await extractDataFromLLM(transcribedTextLLM);
-        const endExtractionTime = performance.now();
-        setJsonLLM(json);
-        const time = `${endExtractionTime - startExtractionTime}ms`;
-        setExtractionTimeLLM(time);
+        setLoading(true); // Show loader
+
+        try {
+            const startExtractionTime = performance.now();
+            const json = await extractDataFromLLM(transcribedTextLLM);
+            const endExtractionTime = performance.now();
+            setJsonLLM(json);
+            const time = `${endExtractionTime - startExtractionTime}ms`;
+            setExtractionTimeLLM(time);
+        } catch (error) {
+            console.error("Extraction failed:", error);
+        } finally {
+            setLoading(false); // Hide loader after extraction completes
+        }
     };
 
     const handleExtractRegex = () => {
@@ -77,7 +86,13 @@ const DataExtractor: React.FC = () => {
                         </>
                     )}
 
-                    <button onClick={handleExtractLLM}>Extract Data</button>
+                    <button
+                        onClick={handleExtractLLM}
+                        disabled={loading}
+                        className={`${styles.extractButton} ${loading ? styles.loadingButton : ''}`}
+                    >
+                        {loading ? <span className={styles.loadingText}>Extracting<span className={styles.dots}>. . . . .</span></span> : 'Extract Data'}
+                    </button>
                 </div>
 
                 <div className={styles.dataExtractorColumn}>
