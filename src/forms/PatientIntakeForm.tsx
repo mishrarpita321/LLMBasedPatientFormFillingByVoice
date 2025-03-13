@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styles from './PatientIntakeForm.module.css';
-import { fillFormByText, fillFormByVoice } from 'form-field-extractor';
+import { fillFormByText, fillFormByVoice } from 'ai-form-field-extractor';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'; // Don't forget to import styles
 

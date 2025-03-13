@@ -1,12 +1,12 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
-import Form from './notused/Form'
 import WelcomePage from './pages/WelcomePage'
 import { FormProvider } from './provider/ContextProvider'
 import PatientIntakeForm from './forms/PatientIntakeForm'
 import "/node_modules/flag-icons/css/flag-icons.min.css";
 import FormTest from './components/form/FormTest'
-import FlightBookingForm from './forms/FlightBookingForm'
 import DataExtractor from './components/DataExtracter'
+import FlightForm from './forms/FlightForm'
+import TestTTS from './components/TestTTS';
 
 
 function App() {
@@ -15,11 +15,11 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<WelcomePage />} />
-          <Route path="/formTest" element={<FormTest />} />
-          <Route path="/form" element={<Form />} />
+          <Route path="/patientForm" element={<FormTest />} />
           <Route path="/patient" element={<PatientIntakeForm />} />
-          <Route path="/flightBooking" element={<FlightBookingForm />} />
+          <Route path="/flightBooking" element={<FlightForm />} />
           <Route path="/dataExtracter" element={<DataExtractor />} />
+          <Route path="/test" element={<TestTTS />} />
         </Routes>
       </BrowserRouter>
     </FormProvider>

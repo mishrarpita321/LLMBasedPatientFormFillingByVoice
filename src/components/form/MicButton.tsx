@@ -2,7 +2,7 @@ import { useContext, useState } from 'react';
 import { FaMicrophone } from 'react-icons/fa';
 import { Button } from '@mui/material';
 import { toast } from 'react-toastify';
-import { fillFormByVoice } from 'form-field-extractor';
+import { fillFormByVoice } from 'ai-form-field-extractor';
 import { FormContext } from '../../context/Context';
 import styles from './MicrophoneButton.module.css';
 import { DATA_EXTRACTION_PROMPT, FORM_SUBMISSION_MESSAGE_DE, FORM_SUBMISSION_MESSAGE_EN } from '../../constants/constants';
@@ -29,17 +29,19 @@ export default function MicButton() {
     setIsRecording(status.isRecording);
   };
 
-  console.log(isPlaying, isRecording);
-
   // Handle microphone click logic
   const handleMicClick = async () => {
     try {
+      const startExtraction = performance.now();
       const extractedData = await fillFormByVoice(
         'user-form',
         DATA_EXTRACTION_PROMPT,
         language,
         statusCallback
       );
+      const endExtraction = performance.now();
+      const timeTaken = (endExtraction - startExtraction) / 1000;
+      console.log(`Time taken for model extraction: ${timeTaken} s`);
 
       // Update form data with extracted data
       setFormData((prevState) => ({
@@ -75,33 +77,64 @@ export default function MicButton() {
   // Handle form submission
   const handleSubmit = async () => {
     const message = language === 'en' ? FORM_SUBMISSION_MESSAGE_EN : FORM_SUBMISSION_MESSAGE_DE;
-    const audioSrc = await getSynthesizeText(message, language);
-
-    if (audioSrc) {
-      const audio = new Audio(audioSrc);
-      audio.play();
-      audio.onended = () => {
-        setFormData({
-          city: '',
-          country: '',
-          dateOfBirth: '',
-          email: '',
-          firstName: '',
-          gender: '',
-          insuranceNumber: '',
-          insuranceType: '',
-          lastName: '',
-          medicalTreatments: '',
-          treatmentDescription: '',
-          visitReason: '',
-        });
-        navigate('/'); // Navigate after audio finishes
-      };
-    } else {
-      navigate('/'); // Navigate if audioSrc is not available
+    
+    try {
+      // Wait until the text has been spoken
+      await getSynthesizeText(message, language);
+      
+      // Reset form fields and navigate after speech ends
+      setFormData({
+        city: '',
+        country: '',
+        dateOfBirth: '',
+        email: '',
+        firstName: '',
+        gender: '',
+        insuranceNumber: '',
+        insuranceType: '',
+        lastName: '',
+        medicalTreatments: '',
+        treatmentDescription: '',
+        visitReason: '',
+      });
+      navigate('/'); // Navigate after audio finishes
+    } catch (error) {
+      console.error("Error during speech synthesis:", error);
+      navigate('/'); // Navigate if there's an error
     }
+    
     console.log('Form data:', formData); // Log form data
-  };
+  };  
+
+  // const handleSubmit = async () => {
+  //   const message = language === 'en' ? FORM_SUBMISSION_MESSAGE_EN : FORM_SUBMISSION_MESSAGE_DE;
+  //   const audioSrc = await getSynthesizeText(message, language);
+
+  //   if (audioSrc) {
+  //     const audio = new Audio(audioSrc);
+  //     audio.play();
+  //     audio.onended = () => {
+  //       setFormData({
+  //         city: '',
+  //         country: '',
+  //         dateOfBirth: '',
+  //         email: '',
+  //         firstName: '',
+  //         gender: '',
+  //         insuranceNumber: '',
+  //         insuranceType: '',
+  //         lastName: '',
+  //         medicalTreatments: '',
+  //         treatmentDescription: '',
+  //         visitReason: '',
+  //       });
+  //       navigate('/'); // Navigate after audio finishes
+  //     };
+  //   } else {
+  //     navigate('/'); // Navigate if audioSrc is not available
+  //   }
+  //   console.log('Form data:', formData); // Log form data
+  // };
 
   return (
     <div className="flex items-center justify-center space-x-8">

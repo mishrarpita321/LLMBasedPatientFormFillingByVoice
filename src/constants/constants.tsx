@@ -12,13 +12,13 @@ export const WELCOME_MESSAGE_DE = "Hallo! Willkommen in unserer Klinik. Ich helf
 
 export const WELCOME_MESSAGE_EN = "Hello! Welcome to our clinic. I’ll be helping you fill out a quick intake form. You can answer each question out loud. Please keep your health insurance card ready and Click on the microphone button to start.";
 
-export const ENGLISH_LANGUAGE_CODE = "en-US";
+export const ENGLISH_LANGUAGE_CODE = "en-GB";
 
 export const GERMAN_LANGUAGE_CODE = "de-DE";
 
-export const GERMAN_LANGUAGE_NAME = "de-DE-Standard-F";
+export const GERMAN_LANGUAGE_NAME = "Google Deutsch";
 
-export const ENGLISH_LANGUAGE_NAME = "en-US-Journey-F";
+export const ENGLISH_LANGUAGE_NAME = "Google UK English Female";
 
 export const TEST_AUDIO = "HELLO";
 
@@ -39,8 +39,9 @@ export const FORM_SUBMISSION_MESSAGE_EN = "Thank you for providing your informat
 export const FORM_SUBMISSION_MESSAGE_DE = "Vielen Dank für die Bereitstellung Ihrer Informationen. Bitte warten Sie im Wartezimmer. Unser Personal wird Sie in Kürze zu Ihrem Check-up aufrufen.";
 
 export const travelPrompt = `
-Travel class: if user wants to travel in economy class, respond with 'economy'. If user wants to travel in business class, respond with 'business'. If user wants to travel in first class, respond with 'first-class'. Departure date and Return date: please provide the departure date in the format YYYY-MM-DD. and future date. If return date is null Travel type is one-way. If return date is not null Travel type is round-trip. If there is no return date , don't include the returnDate key in the json response.
-
+Travel class: The name should start with upper case. if user wants to travel in economy class, respond with 'economy'. If user wants to travel in business class, respond with 'business'. If user wants to travel in first class, respond with 'first-class'. Departure date and Return date: please provide the departure date in the format YYYY-MM-DD. and future date. year should be 2025 always. If return date is null Travel type is one-way. If return date is not null Travel type is round-trip. If there is no return date , don't include the returnDate key in the json response.
+if the user has no additional requirements , respond with 'none'. if the user has whatever additional requirements, provide the details.
+the email should be in lowercase and without spaces and includes '@'.
    Example:
     - If the user says, "I want to book a flight for a round trip on the 15th of August and return on the 20th of August in economy class."
     - The JSON output should be:

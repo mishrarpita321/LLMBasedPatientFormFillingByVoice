@@ -1,9 +1,8 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Box } from '@mui/material';
 import { ENGLISH_LANGUAGE_CODE, ENGLISH_LANGUAGE_NAME, GERMAN_LANGUAGE_CODE, GERMAN_LANGUAGE_NAME, WELCOME_MESSAGE_DE, WELCOME_MESSAGE_EN } from '../../constants/constants';
 import { useNavigate } from 'react-router-dom';
 import { FormContext } from '../../context/Context';
-import axios from 'axios';
 
 const VoiceInputButton: React.FC = () => {
   const formContext = useContext(FormContext);
@@ -11,43 +10,62 @@ const VoiceInputButton: React.FC = () => {
     throw new Error("parseJson must be used within a FormProvider");
   }
   const { isPlaying, setIsPlaying, language } = formContext;
-  const [audioSrc, setAudioSrc] = useState<string | null>(null);
   const navigate = useNavigate();
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
 
-  const preloadAudio = async () => {
-    try {
-      const t2sEndPoint = `https://data-fetching-proxy-ai.vercel.app/makeTextToSpeechCall`;
-      const payload = {
-        audioConfig: { audioEncoding: "MP3" },
-        input: { text: language === 'en' ? WELCOME_MESSAGE_EN : WELCOME_MESSAGE_DE },
-        voice: { languageCode: language === 'en' ? ENGLISH_LANGUAGE_CODE : GERMAN_LANGUAGE_CODE, name: language === 'en' ? ENGLISH_LANGUAGE_NAME : GERMAN_LANGUAGE_NAME },
-      };
-
-      const response = await axios.post(t2sEndPoint, payload);
-      setAudioSrc(`data:audio/mp3;base64,${response.data.audioContent}`);
-    } catch (error) {
-      console.error('Error preloading audio:', error);
-    }
-  };
+  const speakText = (text: string) => {
+    const synth = window.speechSynthesis;
+    const utterance = new SpeechSynthesisUtterance(text);
+  
+    const voices = synth.getVoices();
+  
+    const selectedVoice =
+      language === "en"
+        ? voices.find((voice) => voice.name === ENGLISH_LANGUAGE_NAME)
+        : voices.find((voice) => voice.name === GERMAN_LANGUAGE_NAME);
+  
+    // Assign voice and language
+    utterance.voice = selectedVoice || null;
+    utterance.lang = language === "en" ? ENGLISH_LANGUAGE_CODE : GERMAN_LANGUAGE_CODE;
+  
+    utterance.onend = () => {
+      setIsPlaying(false);
+      navigate("/patientForm");
+    };
+  
+    synth.speak(utterance);
+  };  
 
   const handleStart = () => {
-    if (!audioSrc) {
-      console.error("Audio not preloaded.");
-      return;
-    }
     setIsPlaying(true);
-
-    const audio = new Audio(audioSrc);
-    audio.play();
-    audio.onended = () => {
-      setIsPlaying(false);
-      navigate('/formTest');
-    };
+    const message = language === 'en' ? WELCOME_MESSAGE_EN : WELCOME_MESSAGE_DE;
+    speakText(message);
   };
 
-  React.useEffect(() => {
-    preloadAudio();
-  }, [language]);
+  useEffect(() => {
+    const synth = window.speechSynthesis;
+
+    const populateVoiceList = () => {
+      const availableVoices = synth.getVoices();
+      setVoices(availableVoices);
+    };
+
+    // Populate voices immediately if available
+    populateVoiceList();
+
+    // Add event listener for when voices change
+    if (synth.onvoiceschanged !== undefined) {
+      synth.onvoiceschanged = populateVoiceList;
+    }
+
+    return () => {
+      if (synth.onvoiceschanged !== undefined) {
+        synth.onvoiceschanged = null; // Cleanup
+      }
+    };
+  }, []);
+
+  console.log(voices)
 
   return (
     <Box>

@@ -49,16 +49,47 @@ export const extractDataFromLLM = async (inputText: string) => {
 
 export const extractDataWithRegex = (inputText: string) => {
     // Define regex patterns for the required fields
+    // const regexPatterns = {
+    //     passengerName: /(?:Passenger Name|my name is):?\s*([a-zA-Z\s]+)/i,
+    //     email: /(?:Email|email is|my email is):?\s*([\w.%+-]+@[a-zA-Z.-]+\.[a-zA-Z]{2,})/i,
+    //     departureCity: /(?:Departure City|leaving from|from):?\s*([a-zA-Z\s]+)/i,
+    //     destinationCity: /(?:Destination City|going to|to):?\s*([a-zA-Z\s]+)/i,
+    //     departureDate: /(?:Departure Date|leaving on|date of departure is):?\s*(\d{4}-\d{2}-\d{2})/i,
+    //     returnDate: /(?:Return Date|returning on|date of return is):?\s*(\d{4}-\d{2}-\d{2})/i,
+    //     numberOfPassengers: /(?:Number of Passengers|traveling with|number of people is):?\s*(\d+)/i,
+    //     travelClass: /(?:Travel Class|class of travel is):?\s*(economy|business|first-class)/i,
+    //     additionalRequests: /(?:Additional Requests|special requests are):?\s*(.+)/i,
+    // };
+
+
+    // Flight-related regex patterns
     const regexPatterns = {
-        passengerName: /(?:Passenger Name|my name is):?\s*([a-zA-Z\s]+)/i,
-        email: /(?:Email|email is|my email is):?\s*([\w.%+-]+@[a-zA-Z.-]+\.[a-zA-Z]{2,})/i,
-        departureCity: /(?:Departure City|leaving from|from):?\s*([a-zA-Z\s]+)/i,
-        destinationCity: /(?:Destination City|going to|to):?\s*([a-zA-Z\s]+)/i,
-        departureDate: /(?:Departure Date|leaving on|date of departure is):?\s*(\d{4}-\d{2}-\d{2})/i,
-        returnDate: /(?:Return Date|returning on|date of return is):?\s*(\d{4}-\d{2}-\d{2})/i,
-        numberOfPassengers: /(?:Number of Passengers|traveling with|number of people is):?\s*(\d+)/i,
-        travelClass: /(?:Travel Class|class of travel is):?\s*(economy|business|first-class)/i,
-        additionalRequests: /(?:Additional Requests|special requests are):?\s*(.+)/i,
+        // Captures names in phrases like "I'm Emily Davis", "Passenger Name: John Doe", or "booking a ticket for James O'Connor"
+        passengerName: /(?:I(?:'m| am)|Passenger Name|booking a ticket for|flight for):?\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+(?:['’][A-Z][a-z]+)?))/i,
+
+        // Matches common email formats preceded by labels like "Email", "email is", or "my email is"
+        email: /(?:Email(?: address)?|my email is):?\s*([\w.%+-]+@[a-zA-Z.-]+\.[a-zA-Z]{2,})/i,
+
+        // Captures the departure city from phrases like "from New York" or "leaving from Chicago"
+        departureCity: /(?:from|leaving from):?\s*([A-Za-z\s]+)/i,
+
+        // Captures the destination city from phrases like "to Los Angeles" or "going to San Francisco"
+        destinationCity: /(?:to|going to):?\s*([A-Za-z\s]+)/i,
+
+        // Matches dates in formats like "on March 15, 2025" or "departing on 12th June 2025"
+        departureDate: /(?:on|departing on):?\s*((?:\d{1,2}(?:st|nd|rd|th)?\s+)?[A-Za-z]+\s+\d{4})/i,
+
+        // Matches return dates from phrases like "returning on March 20th"
+        returnDate: /(?:return(?:ing)? on):?\s*((?:\d{1,2}(?:st|nd|rd|th)?\s+)?[A-Za-z]+\s+\d{4})/i,
+
+        // Extracts travel class from phrases like "traveling in business class" or "in premium economy"
+        travelClass: /(?:in\s+|travel(?:ing)?\s*(?:in|class[:]?))\s*(economy|business|first class|premium economy|first-class)/i,
+
+        // Matches phone numbers in various formats, e.g., "555-987-6543", "+1-312-789-4560"
+        phoneNumber: /(?:phone number|phone|contact):?\s*([\+0-9][\d\-\+\s\(\)]{7,})/i,
+
+        // Captures any additional requests like "wheelchair assistance" if mentioned
+        additionalRequests: /(?:additional requests|special requests):?\s*(.+)/i,
     };
 
     // Extracted data object
@@ -70,6 +101,6 @@ export const extractDataWithRegex = (inputText: string) => {
         extractedData[key] = match ? match[1] : null; // Use match[1] if a match is found, otherwise null
     }
     console.log(extractedData);
-    return  JSON.stringify(extractedData, null, 4); // Pretty-print JSON
+    return JSON.stringify(extractedData, null, 4); // Pretty-print JSON
     // return extractedData;
 };

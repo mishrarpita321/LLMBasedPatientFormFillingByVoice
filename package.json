@@ -18,6 +18,7 @@
     "@mui/icons-material": "^6.1.10",
     "@mui/material": "^6.1.10",
     "@testing-library/react": "^16.1.0",
+    "ai-form-field-extractor": "file:ai-form-field-extractor-1.0.5.tgz",
     "axios": "^1.7.9",
     "flag-icons": "^7.2.3",
     "form-field-extractor": "file:form-field-extractor-1.0.2.tgz",
